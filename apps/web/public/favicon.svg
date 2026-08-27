@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FarmSignal">
+  <rect width="64" height="64" rx="14" fill="#166534"/>
+  <path d="M46 18C34 18 22 26 20 40c-1 6 0 8 0 8s2-2 6-3c13-3 20-13 20-27z" fill="#fff"/>
+  <path d="M20 48c4-10 10-17 20-23" stroke="#166534" stroke-width="2.4" stroke-linecap="round" fill="none"/>
+</svg>

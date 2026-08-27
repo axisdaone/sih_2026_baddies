@@ -1,0 +1,20 @@
+# Override file for the `prod` profile: points the API at Postgres + Redis.
+# Always use together with the base file AND the profile flag:
+#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml --profile prod up -d --build
+#
+# The API needs a Postgres driver for this to work (psycopg 3):
+#   services/api/requirements.txt -> psycopg[binary]>=3.2      # PHASE2: add when moving off SQLite
+
+services:
+  api:
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://${POSTGRES_USER:-farmsignal}:${POSTGRES_PASSWORD:-farmsignal}@postgres:5432/${POSTGRES_DB:-farmsignal}}
+      # Optional: shared price cache / rate-limit state. The API falls back to its in-process cache
+      # when unset, so this is safe to leave in place.
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      DEMO_MODE: ${DEMO_MODE:-false}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

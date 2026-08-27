@@ -1,0 +1,31 @@
+{
+  "id": "pharma_freeze",
+  "name": "2-8 C freeze event (hard breach)",
+  "description": "5 C baseline, a 30-minute dip to -1 C at hour 2, then back to 5 C.",
+  "suitable_protocols": [
+    "pharma_2_8"
+  ],
+  "readings": [
+    {
+      "offset_hours": 0,
+      "temp_c": 5
+    },
+    {
+      "offset_hours": 1,
+      "temp_c": 5
+    },
+    {
+      "offset_hours": 2,
+      "temp_c": -1
+    },
+    {
+      "offset_hours": 2.5,
+      "temp_c": 5
+    },
+    {
+      "offset_hours": 4,
+      "temp_c": 5
+    }
+  ],
+  "expected_story": "A single reading below 0 C trips the 'freeze' hard threshold: status 'spoiled', remaining = 0 regardless of how much budget was left. Freezing is irreversible for most biologics."
+}

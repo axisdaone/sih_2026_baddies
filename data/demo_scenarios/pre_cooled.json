@@ -1,0 +1,44 @@
+{
+  "id": "pre_cooled",
+  "name": "Pre-cooled at pack-house",
+  "description": "30 C at harvest, pre-cooled to 15 C within an hour and held at 12 C for the rest of 12 h.",
+  "suitable_protocols": [
+    "tomato",
+    "guava"
+  ],
+  "readings": [
+    {
+      "offset_hours": 0,
+      "temp_c": 30
+    },
+    {
+      "offset_hours": 1,
+      "temp_c": 15
+    },
+    {
+      "offset_hours": 2,
+      "temp_c": 12
+    },
+    {
+      "offset_hours": 4,
+      "temp_c": 12
+    },
+    {
+      "offset_hours": 6,
+      "temp_c": 12
+    },
+    {
+      "offset_hours": 8,
+      "temp_c": 12
+    },
+    {
+      "offset_hours": 10,
+      "temp_c": 12
+    },
+    {
+      "offset_hours": 12,
+      "temp_c": 12
+    }
+  ],
+  "expected_story": "Best practice: shelf-life consumption after 12 h is ~6% (guava) - the batch is still 'fresh' with days in hand, so distant premium markets are feasible."
+}

@@ -1,0 +1,388 @@
+{
+  "version": "1.0",
+  "note": "Scripted demo dataset for POST /demo/seed (idempotent: fixed UUIDs). Times are relative: harvested_at = now - harvested_hours_ago; each reading's taken_at = harvested_at + offset_hours. Only readings with offset_hours <= harvested_hours_ago are listed here (the rest of the scenario stays available to the PWA telemetry player / POST /batches/{id}/simulate). All readings are source 'sim' and must be shown with the SIMULATED chip.",
+  "farmer": {
+    "device_id": "demo-device-001",
+    "display_name": "Muthu (demo)",
+    "locale": "ta",
+    "origin": {
+      "lat": 12.3,
+      "lon": 78.07,
+      "label": "Palacode block, Dharmapuri district (tomato belt)"
+    }
+  },
+  "batches": [
+    {
+      "id": "6f1c2a3e-4b5d-4c6e-8f70-1a2b3c4d5e01",
+      "crop": "tomato",
+      "protocol_id": "tomato",
+      "qty_kg": 500,
+      "harvested_hours_ago": 4,
+      "scenario": "cool_morning",
+      "origin_lat": 12.3,
+      "origin_lon": 78.07,
+      "notes": "Hero batch for the pitch: logged this morning, readings every hour.",
+      "readings": [
+        {
+          "id": "dc26b2fe-6330-4d20-aaef-bab9c4708088",
+          "offset_hours": 0,
+          "temp_c": 22,
+          "source": "sim"
+        },
+        {
+          "id": "27481d77-9b97-4ef4-809c-e5db9db5effe",
+          "offset_hours": 1,
+          "temp_c": 23,
+          "source": "sim"
+        },
+        {
+          "id": "c800ed14-ebf7-40cd-8002-08af01d0d72b",
+          "offset_hours": 2,
+          "temp_c": 24.5,
+          "source": "sim"
+        },
+        {
+          "id": "0588e3b5-f393-4bcf-a9b4-687d49997284",
+          "offset_hours": 3,
+          "temp_c": 26,
+          "source": "sim"
+        },
+        {
+          "id": "c85e06c9-3109-4a71-a814-158be3a1e503",
+          "offset_hours": 4,
+          "temp_c": 28,
+          "source": "sim"
+        }
+      ],
+      "intended_story": "fresh / high confidence. Recommendation: Hosur (~+63% expected value vs nearest mandi Palacode; Bengaluru a close second). Used for the airplane-mode logging and the 'why' screen."
+    },
+    {
+      "id": "9b8e7d6c-5a4b-4c3d-9e2f-1a0b9c8d7e02",
+      "crop": "tomato",
+      "protocol_id": "tomato",
+      "qty_kg": 300,
+      "harvested_hours_ago": 60,
+      "scenario": "hot_afternoon",
+      "origin_lat": 12.3,
+      "origin_lon": 78.07,
+      "notes": "Left in the open yard two and a half days ago.",
+      "readings": [
+        {
+          "id": "c4baa964-62e3-49ef-9305-c67014e36425",
+          "offset_hours": 0,
+          "temp_c": 33,
+          "source": "sim"
+        },
+        {
+          "id": "3f1624cd-7eaa-40ad-968b-975f6c69776e",
+          "offset_hours": 1,
+          "temp_c": 35,
+          "source": "sim"
+        },
+        {
+          "id": "42c8ca35-50b3-48ec-ab9c-05c8232c29bc",
+          "offset_hours": 2,
+          "temp_c": 36.5,
+          "source": "sim"
+        },
+        {
+          "id": "3469c2a8-da68-4321-894f-76788cf1046e",
+          "offset_hours": 3,
+          "temp_c": 38,
+          "source": "sim"
+        },
+        {
+          "id": "9774e406-fd68-4e9a-9929-05bc3aa405a0",
+          "offset_hours": 4,
+          "temp_c": 37.5,
+          "source": "sim"
+        },
+        {
+          "id": "87f74e9c-dc66-4802-8df9-c49d086fe6fe",
+          "offset_hours": 5,
+          "temp_c": 36,
+          "source": "sim"
+        },
+        {
+          "id": "d18d7ed9-13af-46c6-a4df-813cc23b1099",
+          "offset_hours": 6,
+          "temp_c": 30,
+          "source": "sim"
+        },
+        {
+          "id": "b95e4ae4-7bf2-4d13-8277-4ce200c34176",
+          "offset_hours": 8,
+          "temp_c": 30,
+          "source": "sim"
+        }
+      ],
+      "intended_story": "critical / low confidence (last reading 52 h old). Only nearby mandis remain feasible; the app says 'sell now, nearest mandi'. Shows the honest downside case."
+    },
+    {
+      "id": "3c4d5e6f-7a8b-4c9d-8e0f-1a2b3c4d5e03",
+      "crop": "tomato",
+      "protocol_id": "tomato",
+      "qty_kg": 200,
+      "harvested_hours_ago": 36,
+      "scenario": "heat_spike",
+      "origin_lat": 12.3,
+      "origin_lon": 78.07,
+      "notes": "Sat under a tarpaulin yesterday afternoon (2 h at 42 C).",
+      "readings": [
+        {
+          "id": "7adf8ee0-038b-411f-8b82-db453921390f",
+          "offset_hours": 0,
+          "temp_c": 30,
+          "source": "sim"
+        },
+        {
+          "id": "2997e8a3-a1e2-4743-9627-032b7878ef07",
+          "offset_hours": 1,
+          "temp_c": 30,
+          "source": "sim"
+        },
+        {
+          "id": "c408f03c-4406-490d-9db6-ce1e16ec5501",
+          "offset_hours": 2,
+          "temp_c": 30,
+          "source": "sim"
+        },
+        {
+          "id": "56fa6a5a-8319-4246-b23e-93c81f21313f",
+          "offset_hours": 3,
+          "temp_c": 42,
+          "source": "sim"
+        },
+        {
+          "id": "8b83f638-21a8-432b-9ecc-45614474c3dc",
+          "offset_hours": 4,
+          "temp_c": 42,
+          "source": "sim"
+        },
+        {
+          "id": "0a325b3d-834f-4a4d-9d9c-2053242b61ea",
+          "offset_hours": 5,
+          "temp_c": 30,
+          "source": "sim"
+        },
+        {
+          "id": "77803b37-0532-4950-8a6d-cb7b52cac8df",
+          "offset_hours": 6,
+          "temp_c": 30,
+          "source": "sim"
+        },
+        {
+          "id": "fd3e0e16-dff7-452c-a3b2-10672121aa30",
+          "offset_hours": 8,
+          "temp_c": 30,
+          "source": "sim"
+        }
+      ],
+      "intended_story": "warning / low confidence. Alerts 75 and 50 crossed; illustrates a heat spike that accelerates decay without a hard breach."
+    },
+    {
+      "id": "a1b2c3d4-e5f6-4a7b-9c8d-0e1f2a3b4c04",
+      "crop": "tomato",
+      "protocol_id": "tomato",
+      "qty_kg": 800,
+      "harvested_hours_ago": 12,
+      "scenario": "reefer_van",
+      "origin_lat": 12.3,
+      "origin_lon": 78.07,
+      "notes": "FPO-aggregated lot moved in a 12 C reefer van.",
+      "readings": [
+        {
+          "id": "b29a44be-3d50-43fa-9547-966adfa69fc9",
+          "offset_hours": 0,
+          "temp_c": 30,
+          "source": "sim"
+        },
+        {
+          "id": "b042be3b-0c96-466b-9fce-33ce8fa70b8b",
+          "offset_hours": 1,
+          "temp_c": 12,
+          "source": "sim"
+        },
+        {
+          "id": "8616ebc6-d9b6-4bd7-b056-315a3b406cda",
+          "offset_hours": 3,
+          "temp_c": 12,
+          "source": "sim"
+        },
+        {
+          "id": "66d09501-83ef-4467-9ef6-231eea5222c6",
+          "offset_hours": 5,
+          "temp_c": 12,
+          "source": "sim"
+        },
+        {
+          "id": "3954b985-3a37-4ecc-92f4-b700ad27e91e",
+          "offset_hours": 7,
+          "temp_c": 12,
+          "source": "sim"
+        },
+        {
+          "id": "6bab8f61-2b9e-4f05-b01f-584ba8543357",
+          "offset_hours": 9,
+          "temp_c": 12,
+          "source": "sim"
+        },
+        {
+          "id": "64fe6549-c089-4994-a133-a0085a46859a",
+          "offset_hours": 11,
+          "temp_c": 12,
+          "source": "sim"
+        }
+      ],
+      "intended_story": "fresh / high confidence; long unbroken chain of 12 C readings. This is the Quality Pass + tamper demo batch (7 readings in the hash chain). Recommendation: Hosur (Bengaluru second)."
+    },
+    {
+      "id": "d4c3b2a1-f6e5-4b7a-8d9c-1f0e2d3c4b05",
+      "crop": "guava",
+      "protocol_id": "guava",
+      "qty_kg": 400,
+      "harvested_hours_ago": 12,
+      "scenario": "pre_cooled",
+      "origin_lat": 12.3,
+      "origin_lon": 78.07,
+      "notes": "Pre-cooled at the pack-house.",
+      "readings": [
+        {
+          "id": "c735d5b4-3ae0-4767-8181-f941e658a338",
+          "offset_hours": 0,
+          "temp_c": 30,
+          "source": "sim"
+        },
+        {
+          "id": "b961c48e-234b-486c-a043-dfe501773605",
+          "offset_hours": 1,
+          "temp_c": 15,
+          "source": "sim"
+        },
+        {
+          "id": "b696b1b5-905f-4c39-9f58-7f5c108c6f37",
+          "offset_hours": 2,
+          "temp_c": 12,
+          "source": "sim"
+        },
+        {
+          "id": "a9c5700b-0e15-4da8-ba67-fb3d30b4112c",
+          "offset_hours": 4,
+          "temp_c": 12,
+          "source": "sim"
+        },
+        {
+          "id": "0cd5276b-d1b4-45c5-9888-5fe9da953666",
+          "offset_hours": 6,
+          "temp_c": 12,
+          "source": "sim"
+        },
+        {
+          "id": "ae09e4af-9d1b-40ab-b896-86663ace6218",
+          "offset_hours": 8,
+          "temp_c": 12,
+          "source": "sim"
+        },
+        {
+          "id": "53cf580e-a373-4280-8ad1-ba72b62768f8",
+          "offset_hours": 10,
+          "temp_c": 12,
+          "source": "sim"
+        },
+        {
+          "id": "abf8ef99-b6de-4980-b3e9-b5b33444a021",
+          "offset_hours": 12,
+          "temp_c": 12,
+          "source": "sim"
+        }
+      ],
+      "intended_story": "fresh / high confidence. Recommendation: Bengaluru (Binny Mill) - the premium guava market is reachable because the batch was pre-cooled."
+    },
+    {
+      "id": "5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a06",
+      "crop": "guava",
+      "protocol_id": "guava",
+      "qty_kg": 250,
+      "harvested_hours_ago": 30,
+      "scenario": "hot_afternoon",
+      "origin_lat": 12.3,
+      "origin_lon": 78.07,
+      "notes": "Harvested yesterday morning, left in the sun.",
+      "readings": [
+        {
+          "id": "67a470ae-9c4e-4275-831a-150f48f19ffd",
+          "offset_hours": 0,
+          "temp_c": 33,
+          "source": "sim"
+        },
+        {
+          "id": "129a9942-9dc1-45ba-9b34-bb6cd319daf7",
+          "offset_hours": 1,
+          "temp_c": 35,
+          "source": "sim"
+        },
+        {
+          "id": "dbd0442b-ae8e-4b38-b67f-9243abdc1a88",
+          "offset_hours": 2,
+          "temp_c": 36.5,
+          "source": "sim"
+        },
+        {
+          "id": "a1c7a9d3-c9da-4402-b7b4-86ddca93ef06",
+          "offset_hours": 3,
+          "temp_c": 38,
+          "source": "sim"
+        },
+        {
+          "id": "3ece88f8-59fd-41c7-bdb2-676bbc9d4cf2",
+          "offset_hours": 4,
+          "temp_c": 37.5,
+          "source": "sim"
+        },
+        {
+          "id": "3033024a-a874-4918-9beb-37eca49a94c5",
+          "offset_hours": 5,
+          "temp_c": 36,
+          "source": "sim"
+        },
+        {
+          "id": "1653cd5c-0752-4ae0-8d2e-b29e1d71270f",
+          "offset_hours": 6,
+          "temp_c": 30,
+          "source": "sim"
+        },
+        {
+          "id": "1b314278-0613-4840-acdf-d0f2f2826304",
+          "offset_hours": 8,
+          "temp_c": 30,
+          "source": "sim"
+        }
+      ],
+      "intended_story": "warning / low confidence. Recommendation: Hosur with only ~10% uplift over Palacode - the app shows a modest, honest number."
+    }
+  ],
+  "loss_comparison": {
+    "title": "18% vs 7%: the pitch comparison, computed live by the engine",
+    "crop": "tomato",
+    "qty_kg": 500,
+    "baseline": {
+      "label": "Status quo: wait for a trader, sell at the nearest mandi",
+      "scenario": "hot_afternoon",
+      "evaluate_at_offset_hours": 10,
+      "mandi_id": "palacode",
+      "explanation": "8 h of hot_afternoon readings plus 2 h waiting at the last reading (30 C, transit at 30 C), then the 1 km trip to Palacode. Loss = consumed shelf-life fraction at arrival.",
+      "expected_loss_pct": 18.3,
+      "expected_value_inr": 3462
+    },
+    "farmsignal": {
+      "label": "FarmSignal: leave at hour 4 for the recommended mandi",
+      "scenario": "cool_morning",
+      "evaluate_at_offset_hours": 4,
+      "mandi_id": "hosur",
+      "explanation": "4 h of cool_morning readings (22-28 C), then a 2.1 h trip to Hosur at 28 C (the last reading is under 2 h old, so it is used as the transit temperature). Loss = consumed shelf-life fraction at arrival.",
+      "expected_loss_pct": 6.2,
+      "expected_value_inr": 6638
+    },
+    "honesty_note": "Both numbers come from the same kinetics + routing code path with the bundled snapshot prices; they are a simulation, not a field measurement, and the UI labels them SIMULATED."
+  }
+}

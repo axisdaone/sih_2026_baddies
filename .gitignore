@@ -1,0 +1,32 @@
+# OS / editors
+.DS_Store
+Thumbs.db
+.obsidian/
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+services/api/*.db
+services/api/*.sqlite*
+services/api/.env
+
+# Node
+node_modules/
+apps/web/dist/
+apps/web/dev-dist/
+apps/web/.vite/
+*.tsbuildinfo
+npm-debug.log*
+
+# Misc
+.env
+.env.local
+coverage/
