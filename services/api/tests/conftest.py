@@ -15,13 +15,18 @@ os.environ["DATABASE_URL"] = f"sqlite:///{(_TMP_DIR / 'test.db').as_posix()}"
 os.environ["ENV"] = "test"
 os.environ["JWT_SECRET"] = "test-secret-" + "x" * 32
 os.environ["RATE_LIMIT_PER_MIN"] = "1000"
+os.environ["AUTH_RATE_LIMIT_PER_MIN"] = "1000"
+os.environ["DEMO_ADMIN_TOKEN"] = "test-demo-admin-token"
 
 from fastapi.testclient import TestClient  # noqa: E402
 
 from app.deps import rate_limiter  # noqa: E402
 from app.main import app  # noqa: E402
+from app.prices.service import reset_refresh_throttle  # noqa: E402
 
-DEVICE_ID = "test-device-0001"
+# Device ids are UUID v4 on the wire (contract line 8); fixed here so re-logins are idempotent.
+DEVICE_ID = "0f3c1a2b-5d6e-4f70-8a9b-0c1d2e3f4a01"
+DEMO_ADMIN_HEADERS = {"X-Demo-Admin-Token": "test-demo-admin-token"}
 
 
 @pytest.fixture(scope="session")
@@ -34,6 +39,7 @@ def client() -> Iterator[TestClient]:
 @pytest.fixture(autouse=True)
 def _reset_rate_limiter() -> Iterator[None]:
     rate_limiter.reset()
+    reset_refresh_throttle()
     yield
 
 

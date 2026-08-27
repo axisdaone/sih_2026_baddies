@@ -3,13 +3,15 @@
  * imported inside their pages so they never reach the critical path.
  */
 import { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
+import { StorageErrorBoundary } from './components/StorageErrorBoundary';
 import { UpdateToastHost } from './components/UpdateToast';
 import { AlertHost } from './alerts/AlertHost';
 import { AppBootstrap } from './components/AppBootstrap';
+import { VoiceStatusChip } from './voice/VoiceStatusChip';
 
 const Home = lazy(() => import('./pages/Home'));
 const NewBatch = lazy(() => import('./pages/NewBatch'));
@@ -41,29 +43,34 @@ function PageFallback(): JSX.Element {
 }
 
 export default function App({ offlineOnly = false }: { offlineOnly?: boolean } = {}): JSX.Element {
+  const location = useLocation();
   return (
     <>
       {/* Device identity + sync loop + pending-ops badge (state/bootstrap). */}
       <AppBootstrap offlineOnly={offlineOnly} />
-      <Suspense fallback={<PageFallback />}>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Home />} />
-            <Route path="/new" element={<NewBatch />} />
-            <Route path="/batch/:id" element={<BatchDetail />} />
-            <Route path="/batch/:id/why" element={<Why />} />
-            <Route path="/fpo" element={<Fpo />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/index.html" element={<Navigate to="/" replace />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-          {/* Public page: no bottom nav, no sync chrome. */}
-          <Route element={<PublicLayout />}>
-            <Route path="/pass/:id" element={<QualityPass />} />
-          </Route>
-        </Routes>
-      </Suspense>
+      {/* Keyed on the path so navigating away from a crashed page resets the boundary. */}
+      <StorageErrorBoundary key={location.pathname}>
+        <Suspense fallback={<PageFallback />}>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Home />} />
+              <Route path="/new" element={<NewBatch />} />
+              <Route path="/batch/:id" element={<BatchDetail />} />
+              <Route path="/batch/:id/why" element={<Why />} />
+              <Route path="/fpo" element={<Fpo />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/index.html" element={<Navigate to="/" replace />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+            {/* Public page: no bottom nav, no sync chrome. */}
+            <Route element={<PublicLayout />}>
+              <Route path="/pass/:id" element={<QualityPass />} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </StorageErrorBoundary>
       <UpdateToastHost />
+      <VoiceStatusChip />
       <AlertHost />
     </>
   );

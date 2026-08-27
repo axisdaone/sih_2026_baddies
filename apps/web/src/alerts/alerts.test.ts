@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../i18n';
 import { db } from '../db';
 import type { AlertThreshold, ShelfLifeEstimate } from '../types';
@@ -32,11 +32,22 @@ function estimate(overrides: Partial<ShelfLifeEstimate> & { alerts_crossed: Aler
   };
 }
 
+/** Minimal Notification stand-in: records constructor calls, permission already granted. */
+class FakeNotification {
+  static permission: NotificationPermission = 'granted';
+  static instances: Array<{ title: string; options?: NotificationOptions }> = [];
+  static requestPermission = vi.fn(async () => 'granted' as NotificationPermission);
+  constructor(title: string, options?: NotificationOptions) {
+    FakeNotification.instances.push({ title, options });
+  }
+}
+
 describe('checkAlerts', () => {
   beforeEach(async () => {
     await Promise.all([db.meta.clear(), db.batches.clear(), db.readings.clear()]);
     vi.mocked(play).mockClear();
     clearToasts();
+    FakeNotification.instances = [];
     await db.batches.put({
       id: BATCH_ID,
       crop: 'tomato',
@@ -54,6 +65,10 @@ describe('checkAlerts', () => {
       updated_at: '2026-08-27T02:00:05Z',
       synced: true,
     });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   it('fires each threshold once and plays the matching clip', async () => {
@@ -92,13 +107,42 @@ describe('checkAlerts', () => {
     expect(log[0].batch_id).toBe(BATCH_ID);
     expect(log[0].crop).toBe('tomato');
     expect(log[0].qty_kg).toBe(500);
+    expect(log[0].current_temp_c).toBe(28);
+    expect(log[0].current_temp_assumed).toBe(false);
     expect(await db.getMeta(ALERT_LOG_KEY)).toHaveLength(2);
 
     const { result } = renderHook(() => useToasts());
     expect(result.current.map((t) => t.title)).toEqual(['75 % shelf life left', 'Half the shelf life left']);
     expect(result.current[0].body).toContain('Tomato 500 kg');
     expect(result.current[0].body).toContain('≈ 41–79 h (most likely 59 h)');
+    expect(result.current[0].body).not.toContain('assumes');
     expect(result.current[0].to).toBe(`/batch/${BATCH_ID}`);
+  });
+
+  it('says when the range comes from an assumed temperature (no reading)', async () => {
+    await checkAlerts(BATCH_ID, estimate({ alerts_crossed: [75], current_temp_assumed: true, current_temp_c: 30, hours_since_last_reading: null }));
+    const { result } = renderHook(() => useToasts());
+    expect(result.current[0].body).toContain('Estimate assumes 30 °C — add a temperature reading.');
+    expect((await getAlertLog())[0].current_temp_assumed).toBe(true);
+  });
+
+  it('labels the system notification SIMULATED for a batch with simulated readings (toast keeps the chip only)', async () => {
+    vi.stubGlobal('Notification', FakeNotification);
+    await db.readings.put({ id: 'r-sim', batch_id: BATCH_ID, temp_c: 33, taken_at: '2026-08-27T03:00:00Z', source: 'sim', client_seq: 2, synced: false });
+    await checkAlerts(BATCH_ID, estimate({ alerts_crossed: [25], status: 'critical' }));
+    expect(FakeNotification.instances).toHaveLength(1);
+    expect(FakeNotification.instances[0].title).toContain('SIMULATED');
+    expect(FakeNotification.instances[0].title).toContain('Sell now');
+    const { result } = renderHook(() => useToasts());
+    const toast = result.current.find((t) => t.title === 'Sell now');
+    expect(toast?.simulated).toBe(true);
+    expect(toast?.title).not.toContain('SIMULATED');
+  });
+
+  it('does not label the system notification for real readings', async () => {
+    vi.stubGlobal('Notification', FakeNotification);
+    await checkAlerts(BATCH_ID, estimate({ alerts_crossed: [75] }));
+    expect(FakeNotification.instances[0].title).toBe('75 % shelf life left');
   });
 
   it('resetAlerts lets thresholds fire again', async () => {

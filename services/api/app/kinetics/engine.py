@@ -11,8 +11,12 @@ decision that is not spelled out in the contract is documented inline so it can 
 * Readings are stably sorted by `taken_at`; ties keep input order (seq order from the DB).
 * `current_temp_c` is the last kept reading's temperature (or `default_ambient_c`), unclamped.
 * `breach` reports the first breaching reading in time order, the first matching threshold in
-  protocol order, and the threshold's `value_c` (not the reading's temperature).
+  protocol order, and the threshold's `value_c` (not the reading's temperature) and `label`.
 * Status / alerts use the unrounded mid remaining fraction.
+* Timestamps serialise as ISO-8601 UTC 'Z' with milliseconds only when non-zero (`iso_z`).
+
+`data/demo_scenarios/golden_estimates_py.json` (written by `scripts/dump_golden_estimates.py`)
+is the byte-for-byte reference the TypeScript parity test compares against.
 """
 
 from __future__ import annotations
@@ -181,8 +185,13 @@ def _find_breach(protocol: dict[str, Any], readings: Sequence[ReadingLike]) -> B
             kind = threshold["type"]
             hit = (kind == "max_temp" and temp > value_c) or (kind == "min_temp" and temp < value_c)
             if hit:
+                label = threshold.get("label")
                 return Breach(
-                    type=kind, value_c=value_c, reading_id=str(reading.id), at=reading.taken_at
+                    type=kind,
+                    value_c=value_c,
+                    reading_id=str(reading.id),
+                    at=reading.taken_at,
+                    label=None if label is None else str(label),
                 )
     return None
 
@@ -228,6 +237,15 @@ def _end_at(now: datetime, rounded_hours: float) -> datetime:
     return now + timedelta(milliseconds=round_half_up(rounded_hours * _MS_PER_HOUR, 0))
 
 
+@dataclass(frozen=True, slots=True)
+class Evaluation:
+    """`evaluate()` output plus the unrounded mid consumed fraction for downstream integrators
+    (routing continues the integral from it, so it must not start from the 4-dp wire value)."""
+
+    estimate: ShelfLifeEstimate
+    consumed_mid: float
+
+
 def evaluate(
     protocol: dict[str, Any],
     harvested_at: datetime,
@@ -241,6 +259,16 @@ def evaluate(
     status / confidence / alerts_crossed exactly as specified in contract section 2.2.
     Naive datetimes are treated as UTC. Rounds only at the output boundary.
     """
+    return evaluate_detailed(protocol, harvested_at, readings, now).estimate
+
+
+def evaluate_detailed(
+    protocol: dict[str, Any],
+    harvested_at: datetime,
+    readings: Sequence[ReadingLike],
+    now: datetime,
+) -> Evaluation:
+    """`evaluate()` that also returns the unrounded mid consumed fraction."""
     harvested_at = to_utc(harvested_at)
     now = to_utc(now)
 
@@ -289,7 +317,7 @@ def evaluate(
 
     rounded_hours = {name: round_half_up(value, 1) for name, value in remaining.items()}
     mid_q10 = scenarios["mid"].q10
-    return ShelfLifeEstimate(
+    estimate = ShelfLifeEstimate(
         protocol_id=str(protocol["id"]),
         model_version=MODEL_VERSION,
         computed_at=now,
@@ -325,16 +353,54 @@ def evaluate(
             for segment in segments
         ],
     )
+    return Evaluation(estimate=estimate, consumed_mid=consumed["mid"])
 
 
 def consumed_after(
-    protocol: dict[str, Any], estimate: ShelfLifeEstimate, hours: float, temp_c: float
+    protocol: dict[str, Any],
+    estimate: ShelfLifeEstimate,
+    hours: float,
+    temp_c: float,
+    *,
+    consumed_now: float | None = None,
 ) -> float:
     """Mid-scenario consumed fraction after holding `hours` more at `temp_c` (routing, section 3).
 
-    consumed = clamp(estimate.consumed_fraction + hours * r(temp_c) / L_ref, 0, 1).
-    Not rounded here; the routing layer rounds at its own output boundary.
+    consumed = clamp(consumed_now + hours * r(temp_c) / L_ref, 0, 1), where `consumed_now`
+    defaults to the estimate's (4-dp) `consumed_fraction`; pass `Evaluation.consumed_mid` to
+    continue the integral unrounded. Not rounded here; the routing layer rounds on output.
     """
     l_ref = float(protocol["reference_shelf_life_hours"])
+    start = estimate.consumed_fraction if consumed_now is None else consumed_now
     extra = hours * rate_multiplier(protocol, temp_c) / l_ref
-    return _clamp(estimate.consumed_fraction + extra, 0.0, 1.0)
+    return _clamp(start + extra, 0.0, 1.0)
+
+
+def remaining_hours_at(
+    protocol: dict[str, Any],
+    estimate: ShelfLifeEstimate,
+    temp_c: float,
+    *,
+    scenario: str = "mid",
+    consumed_now: float | None = None,
+) -> float:
+    """Remaining hours if the batch is held at `temp_c` from now on (contract step 4 re-projected
+    at another temperature). Routing uses it so feasibility and spoilage-at-arrival are both
+    evaluated at the transit temperature rather than at the (possibly stale) last reading.
+
+    `scenario` picks the parameter set ("mid" | "low" | "high"). The mid case continues from
+    the consumed fraction like `consumed_after` (unrounded; reuses the MIN_RATE guard and the
+    excursion `r == 0 -> budget remaining` branch). The wire estimate carries only the *mid*
+    consumed fraction, so low/high re-project their own `remaining_hours` by the rate ratio
+    (`remaining` is proportional to `1 / r(T)` for a fixed consumed fraction).
+    """
+    params = _scenarios(protocol)[scenario]
+    if scenario == "mid":
+        start = estimate.consumed_fraction if consumed_now is None else consumed_now
+        return _remaining_hours(protocol, start, temp_c, params)
+    current = float(getattr(estimate.remaining_hours, scenario))
+    rate_now = rate_multiplier(protocol, estimate.current_temp_c, params.q10)
+    rate_at = rate_multiplier(protocol, temp_c, params.q10)
+    if rate_now == 0.0 or rate_at == 0.0:  # excursion in band: budget remaining, no temperature
+        return current
+    return current * rate_now / rate_at

@@ -1,9 +1,15 @@
 /**
  * Locale-aware number / time formatting (contract §9). Pure functions; no React.
- * Hindi and Tamil render native numerals (Devanagari / Tamil digits) when `nativeNumerals` is on,
- * which is the default for hi/ta (Settings toggle, persisted under localStorage 'fs.numerals').
+ * Hindi renders Devanagari digits when `nativeNumerals` is on (the default for hi; Tamil digits ௦–௯
+ * are not in contemporary use in Tamil Nadu, so the default for ta is off — see
+ * getNativeNumeralsPreference). Persisted under localStorage 'fs.numerals' via the Settings toggle.
+ *
+ * i18next strings use the `num` formatter for numeric placeholders (`{{count, num}}`) so plural
+ * selection keeps the raw number while the rendered digits follow the same preference; see
+ * registerNumeralFormatter().
  */
 import i18n from './index';
+import type { i18n as I18n } from 'i18next';
 import type { Locale } from '../types';
 
 export interface NumberFormatOptions {
@@ -11,6 +17,8 @@ export interface NumberFormatOptions {
   nativeNumerals?: boolean;
   minimumFractionDigits?: number;
   maximumFractionDigits?: number;
+  /** Intl signDisplay ("exceptZero" renders "+23%"). */
+  signDisplay?: 'auto' | 'always' | 'exceptZero' | 'never';
 }
 
 /** BCP-47 tags used for Intl. Indian English for lakh/crore grouping. */
@@ -19,8 +27,14 @@ const NUMBERING_SYSTEM: Partial<Record<Locale, string>> = { hi: 'deva', ta: 'tam
 /** localStorage key for the numerals preference: "native" | "latin". */
 export const NUMERALS_STORAGE_KEY = 'fs.numerals';
 export const IST_TIME_ZONE = 'Asia/Kolkata';
+const SUPPORTED: readonly Locale[] = ['en', 'hi', 'ta'];
 
-/** Stored preference; default on for hi/ta, off for en. */
+/** Default when nothing is stored: on for Hindi (Devanagari digits are readable), off for en and ta. */
+export function defaultNativeNumerals(locale: Locale): boolean {
+  return locale === 'hi';
+}
+
+/** Stored preference, else the per-locale default (see defaultNativeNumerals). */
 export function getNativeNumeralsPreference(locale: Locale): boolean {
   try {
     const stored = typeof localStorage !== 'undefined' ? localStorage.getItem(NUMERALS_STORAGE_KEY) : null;
@@ -29,7 +43,7 @@ export function getNativeNumeralsPreference(locale: Locale): boolean {
   } catch {
     /* storage unavailable (private mode) — fall through to the default */
   }
-  return locale !== 'en';
+  return defaultNativeNumerals(locale);
 }
 
 export function setNativeNumeralsPreference(native: boolean): void {
@@ -53,7 +67,16 @@ export function formatNumber(n: number, locale: Locale, opts: NumberFormatOption
   return new Intl.NumberFormat(intlLocale(locale, opts.nativeNumerals), {
     minimumFractionDigits: opts.minimumFractionDigits ?? 0,
     maximumFractionDigits: opts.maximumFractionDigits ?? 1,
+    ...(opts.signDisplay ? { signDisplay: opts.signDisplay } : {}),
   }).format(n);
+}
+
+/**
+ * Transliterate the digits of a raw input string one by one ("-3.50" → "-३.५०") so intermediate
+ * pad states ('-', '3.', '0.', '12.34') round-trip exactly; the value itself stays Latin for parsing.
+ */
+export function formatDigits(s: string, locale: Locale, opts: NumberFormatOptions = {}): string {
+  return s.replace(/\d/g, (d) => formatNumber(Number(d), locale, { ...opts, maximumFractionDigits: 0 }));
 }
 
 /** "58.7 h" — 1 dp under 10 h, whole hours above. Unit label comes from common.hours_short. */
@@ -96,6 +119,20 @@ export function formatDateTimeIST(iso: string | Date, locale: Locale, opts: Date
   }).format(date);
 }
 
+/**
+ * Date-only in IST ("25 Aug 2026"); accepts 'YYYY-MM-DD' (parsed as UTC midnight → the same IST
+ * date) or a full ISO timestamp. null / empty / unparsable → "—".
+ */
+export function formatDateIST(iso: string | Date | null | undefined, locale: Locale, opts: DateTimeFormatOptions = {}): string {
+  if (iso == null || iso === '') return '—';
+  const date = iso instanceof Date ? iso : new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+  return new Intl.DateTimeFormat(intlLocale(locale, opts.nativeNumerals), {
+    timeZone: IST_TIME_ZONE,
+    dateStyle: opts.dateStyle ?? 'medium',
+  }).format(date);
+}
+
 /** Time-only in IST ("12:00 pm"). */
 export function formatTimeIST(iso: string | Date, locale: Locale, opts: NumberFormatOptions = {}): string {
   const date = iso instanceof Date ? iso : new Date(iso);
@@ -130,5 +167,21 @@ export function formatPercent(fraction: number, locale: Locale, opts: NumberForm
   return new Intl.NumberFormat(intlLocale(locale, opts.nativeNumerals), {
     style: 'percent',
     maximumFractionDigits: opts.maximumFractionDigits ?? 0,
+    ...(opts.signDisplay ? { signDisplay: opts.signDisplay } : {}),
   }).format(fraction);
+}
+
+/**
+ * Register the `num` interpolation formatter (`{{count, num}}`) so numeric placeholders in the
+ * catalogues follow the numerals preference. Whole numbers only — interpolated counts are integers.
+ * Reads the preference on every call (i18next's `add` is uncached), so a Settings toggle applies
+ * to the next render.
+ */
+export function registerNumeralFormatter(instance: I18n): void {
+  instance.services?.formatter?.add('num', (value: unknown, lng?: string) => {
+    const base = (lng ?? 'en').split('-')[0];
+    const locale: Locale = (SUPPORTED as readonly string[]).includes(base) ? (base as Locale) : 'en';
+    const n = typeof value === 'number' ? value : Number(value);
+    return Number.isFinite(n) ? formatNumber(n, locale, { maximumFractionDigits: 0 }) : String(value ?? '');
+  });
 }

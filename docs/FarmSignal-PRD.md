@@ -90,7 +90,7 @@ Vanity metrics (raw user counts) are explicitly excluded.
 1. **M1 — Engine (days 1–2):** kinetics module + protocol data files + unit tests against literature curves.
 2. **M2 — Core loop (days 2–4):** batch logging PWA, offline queue, sync API, recommendation endpoint with live Agmarknet pull.
 3. **M3 — Demo polish (days 4–5):** journey UI, voice/icon layer (2 languages), Quality Pass QR, simulated telemetry player, FPO map view.
-4. **M4 — Pitch build:** scripted demo scenario (the 18%→7% comparison), seeded data, failure-mode rehearsal (airplane-mode demo).
+4. **M4 — Pitch build:** scripted demo scenario (the 18 %→13 % same-weather comparison), seeded data, failure-mode rehearsal (airplane-mode demo).
 
 ## 9. Risks (delta from pitch deck)
 

@@ -1,27 +1,25 @@
 /**
- * Demo controls (DEMO-SCRIPT.md): "Use demo identity & load demo data" (POST /demo/seed → token →
- * meta identity → drain()), "use demo origin" toggle, reset local data, reload app.
+ * Demo controls (DEMO-SCRIPT.md): "Use demo identity & load demo data" (drain under the current
+ * identity → POST /demo/seed → token → meta identity → drop the previous farmer's synced batches →
+ * drain()), "use demo origin" toggle, reset local data, reload app.
  */
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useTranslation } from 'react-i18next';
 import { api, setToken } from '../../api/client';
 import { db, META_KEYS } from '../../db';
+import { notifyPending } from '../../db/outbox';
 import { DEMO_ORIGIN } from '../../data';
+import { useFormat } from '../../i18n/useFormat';
 import { drain } from '../../sync';
 import { notify } from '../../alerts/toast';
 import Button from '../Button';
-import type { Batch, Reading } from '../../types';
+import { LOSS_COMPARISON_META_KEY, LossComparisonCard } from '../LossComparisonCard';
+import type { Batch, DemoSeedResponse, Reading } from '../../types';
 
-/** Contract §6: POST /demo/seed response (services/api/app/schemas/demo.py). */
-export interface DemoSeedResponse {
-  farmer_id: string;
-  device_id: string;
-  token: string;
-  batch_ids?: string[];
-  created?: boolean;
-  display_name?: string | null;
-}
+export type { DemoSeedResponse };
+/** meta key: the seed's `loss_comparison` block (LossComparison), rendered by <LossComparisonCard/>. */
+export { LOSS_COMPARISON_META_KEY };
 
 export const DEMO_DEVICE_ID = 'demo-device-001';
 export const DEMO_DISPLAY_NAME = 'Muthu';
@@ -46,13 +44,42 @@ async function pullBatchesDirect(): Promise<number> {
   return batches.length;
 }
 
+/**
+ * After switching identity, drop batches that belong to a *different* farmer and were already
+ * acknowledged by the server (plus their readings and any leftover ops for them). Unsynced local
+ * batches — created offline, `farmer_id` '' or the old farmer — are legitimate pending creates and
+ * are kept: the next drain creates them under the new farmer.
+ */
+export async function forgetOtherFarmers(farmerId: string): Promise<number> {
+  const stale = await db.batches.filter((b) => b.synced === true && b.farmer_id !== '' && b.farmer_id !== farmerId).toArray();
+  if (stale.length === 0) return 0;
+  const ids = new Set(stale.map((b) => b.id));
+  await db.transaction('rw', db.batches, db.readings, db.ops, async () => {
+    await db.batches.bulkDelete([...ids]);
+    await db.readings.where('batch_id').anyOf([...ids]).delete();
+    await db.ops.filter((op) => op.status !== 'done' && ids.has(op.kind === 'reading.append' ? op.payload.batch_id : op.payload.id)).delete();
+  });
+  void notifyPending();
+  return stale.length;
+}
+
 export async function loadDemo(): Promise<{ name: string; count: number }> {
+  // Land real pending ops under the current identity before the token changes hands.
+  try {
+    await drain();
+  } catch {
+    /* best effort */
+  }
   const res = await api.post<DemoSeedResponse>('/demo/seed', {}, { anonymous: true });
   setToken(res.token);
   const name = res.display_name ?? DEMO_DISPLAY_NAME;
   await db.setMeta(META_KEYS.deviceId, res.device_id || DEMO_DEVICE_ID);
   await db.setMeta(META_KEYS.farmerId, res.farmer_id);
-  await db.setMeta(META_KEYS.displayName, name);
+  // The display name is the farmer's opt-in choice: only seed it when they never set or cleared one.
+  const [existingName, share] = await Promise.all([db.getMeta<string>(META_KEYS.displayName), db.getMeta<boolean>(META_KEYS.shareDisplayName)]);
+  if (existingName === undefined && share === undefined) await db.setMeta(META_KEYS.displayName, name);
+  if (res.loss_comparison?.baseline && res.loss_comparison?.farmsignal) await db.setMeta(LOSS_COMPARISON_META_KEY, res.loss_comparison);
+  await forgetOtherFarmers(res.farmer_id);
   let count = 0;
   try {
     const sync = await drain();
@@ -72,6 +99,7 @@ export async function loadDemo(): Promise<{ name: string; count: number }> {
 
 export function DemoSection(): JSX.Element {
   const { t } = useTranslation('settings');
+  const f = useFormat();
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const demoOrigin = useLiveQuery(() => db.getMeta<{ lat: number; lon: number }>(DEMO_ORIGIN_META_KEY), [], undefined);
@@ -111,10 +139,17 @@ export function DemoSection(): JSX.Element {
         <Button onClick={() => void onLoad()} loading={busy} fullWidth data-testid="load-demo">
           {busy ? t('demo.loading') : t('demo.load')}
         </Button>
+        <LossComparisonCard />
         <label className="flex min-h-14 cursor-pointer items-center justify-between gap-3">
           <span>
             <span className="block font-semibold">{t('demo.demo_origin')}</span>
-            <span className="block text-sm text-gray-600">{t('demo.demo_origin_desc', { label: DEMO_ORIGIN.label, lat: DEMO_ORIGIN.lat, lon: DEMO_ORIGIN.lon })}</span>
+            <span className="block text-sm text-gray-600">
+              {t('demo.demo_origin_desc', {
+                label: DEMO_ORIGIN.label,
+                lat: f.number(DEMO_ORIGIN.lat, { maximumFractionDigits: 2 }),
+                lon: f.number(DEMO_ORIGIN.lon, { maximumFractionDigits: 2 }),
+              })}
+            </span>
           </span>
           <input type="checkbox" className="h-7 w-7 shrink-0 accent-brand" checked={Boolean(demoOrigin)} onChange={(e) => void toggleDemoOrigin(e.target.checked)} aria-label={t('demo.demo_origin')} />
         </label>

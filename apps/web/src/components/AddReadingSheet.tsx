@@ -1,6 +1,7 @@
 /** Manual temperature entry: numeric pad + quick chips; the caller persists via addReadingLocal. */
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFormat } from '../i18n/useFormat';
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
 import { NumericPad } from './NumericPad';
@@ -23,6 +24,7 @@ export function parseTemp(value: string): number | null {
 
 export function AddReadingSheet({ open, onClose, onSave }: AddReadingSheetProps): JSX.Element | null {
   const { t } = useTranslation('batch');
+  const f = useFormat();
   const [value, setValue] = useState('');
   const [saving, setSaving] = useState(false);
   const temp = parseTemp(value);
@@ -34,6 +36,8 @@ export function AddReadingSheet({ open, onClose, onSave }: AddReadingSheetProps)
       await onSave(temp);
       setValue('');
       onClose();
+    } catch {
+      /* the caller has already explained the failure (toast); keep the sheet open with the value */
     } finally {
       setSaving(false);
     }
@@ -43,14 +47,14 @@ export function AddReadingSheet({ open, onClose, onSave }: AddReadingSheetProps)
     <BottomSheet open={open} onClose={onClose} title={t('reading.add_title')}>
       <div className="mb-3 flex items-center justify-center rounded-2xl bg-gray-50 py-3">
         <output className="tabular text-5xl font-extrabold" aria-live="polite" aria-label={t('reading.temp_label')}>
-          {value === '' ? '—' : value}
+          {value === '' ? '—' : f.digits(value)}
           <span className="ml-1 text-2xl text-gray-500">°C</span>
         </output>
       </div>
       <div className="mb-3 flex flex-wrap gap-2" aria-label={t('reading.quick')}>
         {QUICK_TEMPS_C.map((q) => (
-          <button key={q} type="button" className={`min-h-12 rounded-full px-4 text-base font-semibold ${value === String(q) ? 'bg-brand text-white' : 'bg-brand-50 text-brand-900'}`} onClick={() => setValue(String(q))}>
-            {q} °C
+          <button key={q} type="button" className={`min-h-14 rounded-full px-4 text-base font-semibold ${value === String(q) ? 'bg-brand text-white' : 'bg-brand-50 text-brand-900'}`} onClick={() => setValue(String(q))}>
+            {f.number(q)} °C
           </button>
         ))}
       </div>

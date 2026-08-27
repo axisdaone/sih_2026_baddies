@@ -1,9 +1,13 @@
 /**
  * F1 — log a harvest in ≤ 30 s, fully offline: crop tiles, qty stepper, harvest-time quick picks,
- * non-blocking GPS (falls back to DEMO_ORIGIN with a note), optional first reading, Save.
+ * non-blocking GPS (falls back to the demo origin with a note), optional first reading, Save.
  * Nothing here awaits the network; the outbox syncs later.
+ *
+ * GPS fallback order: db.meta 'demo_origin' ({lat, lon, label}, written by Settings → "use demo
+ * origin") when present, else the bundled DEMO_ORIGIN from data/mandis.json.
  */
 import { useState } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../components/Button';
@@ -12,6 +16,8 @@ import { NumericPad } from '../components/NumericPad';
 import { Stepper } from '../components/Stepper';
 import { parseTemp, QUICK_TEMPS_C } from '../components/AddReadingSheet';
 import { CROP_PROTOCOLS, DEMO_ORIGIN } from '../data';
+import { db } from '../db';
+import { isStorageError } from '../db/errors';
 import { addReadingLocal, createBatchLocal } from '../db/repo';
 import { useGeolocation } from '../hooks/useGeolocation';
 import { useFormat } from '../i18n/useFormat';
@@ -25,11 +31,44 @@ import { play } from '../voice';
 type HarvestPick = 'now' | '1h' | 'morning' | 'custom';
 const QTY_PRESETS = [50, 100, 250, 500];
 
+/** Same key as components/settings/DemoSection (DEMO_ORIGIN_META_KEY); a literal keeps that module out of this chunk. */
+const DEMO_ORIGIN_META_KEY = 'demo_origin';
+
+interface OriginFallback {
+  lat: number;
+  lon: number;
+  label: string;
+}
+
+function isOriginFallback(v: unknown): v is OriginFallback {
+  if (!v || typeof v !== 'object') return false;
+  const o = v as Record<string, unknown>;
+  return typeof o.lat === 'number' && Number.isFinite(o.lat) && typeof o.lon === 'number' && Number.isFinite(o.lon) && typeof o.label === 'string';
+}
+
+/** Origin used when GPS is unavailable: Settings' demo origin if set, else the bundled one. */
+export function useOriginFallback(): OriginFallback {
+  const fromMeta = useLiveQuery(
+    async () => {
+      try {
+        const v = await db.getMeta<unknown>(DEMO_ORIGIN_META_KEY);
+        return isOriginFallback(v) ? v : null;
+      } catch {
+        return null;
+      }
+    },
+    [],
+    null,
+  );
+  return fromMeta ?? DEMO_ORIGIN;
+}
+
 export default function NewBatch(): JSX.Element {
   const { t } = useTranslation(['batch', 'common']);
   const f = useFormat();
   const navigate = useNavigate();
   const geo = useGeolocation();
+  const fallbackOrigin = useOriginFallback();
 
   const [crop, setCrop] = useState<Crop | null>(null);
   const [qty, setQty] = useState(100);
@@ -50,6 +89,7 @@ export default function NewBatch(): JSX.Element {
   };
   const tempValue = temp === '' ? null : parseTemp(temp);
   const usingFallback = geo.status !== 'ok' && geo.status !== 'locating';
+  const step = (n: number) => `${f.number(n, { maximumFractionDigits: 0 })} · `;
 
   const save = async () => {
     if (!crop) {
@@ -63,9 +103,9 @@ export default function NewBatch(): JSX.Element {
     setSaving(true);
     setError(null);
     try {
-      const origin = geo.fix ?? { lat: DEMO_ORIGIN.lat, lon: DEMO_ORIGIN.lon };
+      const origin = geo.fix ?? { lat: fallbackOrigin.lat, lon: fallbackOrigin.lon };
       const trimmedNotes = notes.trim();
-      const noteParts = [trimmedNotes, geo.fix ? '' : t('batch:new.origin_note', { label: DEMO_ORIGIN.label })].filter(Boolean);
+      const noteParts = [trimmedNotes, geo.fix ? '' : t('batch:new.origin_note', { label: fallbackOrigin.label })].filter(Boolean);
       const batch = await createBatchLocal({
         crop,
         qty_kg: qty,
@@ -79,12 +119,13 @@ export default function NewBatch(): JSX.Element {
       void drain(); // opportunistic; never awaited
       navigate(`/batch/${batch.id}`, { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('common:error_generic'));
+      // Never show Dexie's raw English message; explain storage failures, otherwise stay generic.
+      setError(isStorageError(err) ? t('common:storage_unavailable') : t('common:error_generic'));
       setSaving(false);
     }
   };
 
-  const pickClass = (p: HarvestPick) => `min-h-12 rounded-full px-4 text-base font-semibold ${pick === p ? 'bg-brand text-white' : 'bg-brand-50 text-brand-900'}`;
+  const pickClass = (p: HarvestPick) => `min-h-14 rounded-full px-4 text-base font-semibold ${pick === p ? 'bg-brand text-white' : 'bg-brand-50 text-brand-900'}`;
 
   return (
     <form
@@ -98,17 +139,21 @@ export default function NewBatch(): JSX.Element {
 
       <section aria-labelledby="crop-label">
         <p id="crop-label" className="mb-2 text-sm font-semibold text-gray-700">
-          1 · {t('batch:new.crop')}
+          {step(1)}
+          {t('batch:new.crop')}
         </p>
         <CropPicker protocols={CROP_PROTOCOLS} value={crop} onChange={setCrop} />
       </section>
 
       <section>
-        <Stepper id="qty" label={`2 · ${t('batch:new.qty')}`} value={qty} onChange={setQty} step={10} min={1} max={50_000} presets={QTY_PRESETS} unit={t('common:kg')} />
+        <Stepper id="qty" label={`${step(2)}${t('batch:new.qty')}`} value={qty} onChange={setQty} step={10} min={1} max={50_000} presets={QTY_PRESETS} unit={t('common:kg')} />
       </section>
 
       <section>
-        <p className="mb-2 text-sm font-semibold text-gray-700">3 · {t('batch:new.harvest_time')}</p>
+        <p className="mb-2 text-sm font-semibold text-gray-700">
+          {step(3)}
+          {t('batch:new.harvest_time')}
+        </p>
         <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t('batch:new.harvest_time')}>
           <button type="button" role="radio" aria-checked={pick === 'now'} className={pickClass('now')} onClick={() => setPick('now')}>
             {t('batch:new.quick_now')}
@@ -137,12 +182,15 @@ export default function NewBatch(): JSX.Element {
           />
         )}
         <p className="mt-2 text-sm text-gray-600" data-testid="harvest-preview">
-          {f.dateTime(harvestedAt())} IST
+          {f.dateTime(harvestedAt())} {t('common:ist')}
         </p>
       </section>
 
       <section>
-        <p className="mb-1 text-sm font-semibold text-gray-700">4 · {t('batch:new.location')}</p>
+        <p className="mb-1 text-sm font-semibold text-gray-700">
+          {step(4)}
+          {t('batch:new.location')}
+        </p>
         <div className="flex items-center justify-between gap-2 rounded-xl bg-gray-50 px-3 py-2 text-sm" role="status" aria-live="polite">
           {geo.status === 'locating' && <span>{t('batch:new.locating')}</span>}
           {geo.status === 'ok' && geo.fix && (
@@ -152,11 +200,11 @@ export default function NewBatch(): JSX.Element {
           )}
           {usingFallback && (
             <span>
-              <strong>{t('batch:new.location_unavailable')}</strong> — {t('batch:new.location_fallback', { label: DEMO_ORIGIN.label })}
+              <strong>{t('batch:new.location_unavailable')}</strong> — {t('batch:new.location_fallback', { label: fallbackOrigin.label })}
             </span>
           )}
           {geo.status !== 'locating' && (
-            <button type="button" className="min-h-10 shrink-0 rounded-full bg-white px-3 font-semibold text-brand" onClick={geo.retry}>
+            <button type="button" className="min-h-12 shrink-0 rounded-full bg-white px-3 font-semibold text-brand" onClick={geo.retry}>
               {t('batch:new.retry_gps')}
             </button>
           )}
@@ -164,19 +212,22 @@ export default function NewBatch(): JSX.Element {
       </section>
 
       <section>
-        <p className="mb-1 text-sm font-semibold text-gray-700">5 · {t('batch:new.first_reading')}</p>
+        <p className="mb-1 text-sm font-semibold text-gray-700">
+          {step(5)}
+          {t('batch:new.first_reading')}
+        </p>
         <p className="mb-2 text-xs text-gray-500">{t('batch:new.first_reading_hint')}</p>
         <div className="flex flex-wrap gap-2">
           {QUICK_TEMPS_C.map((q) => (
-            <button key={q} type="button" className={`min-h-12 rounded-full px-4 text-base font-semibold ${temp === String(q) ? 'bg-brand text-white' : 'bg-brand-50 text-brand-900'}`} onClick={() => setTemp(String(q))}>
-              {q} °C
+            <button key={q} type="button" className={`min-h-14 rounded-full px-4 text-base font-semibold ${temp === String(q) ? 'bg-brand text-white' : 'bg-brand-50 text-brand-900'}`} onClick={() => setTemp(String(q))}>
+              {f.number(q)} °C
             </button>
           ))}
-          <button type="button" className="min-h-12 rounded-full bg-gray-100 px-4 text-base font-semibold text-gray-800" onClick={() => setShowPad((s) => !s)} aria-expanded={showPad}>
-            {temp === '' ? t('batch:new.other_temp') : `${temp} °C`}
+          <button type="button" className="min-h-14 rounded-full bg-gray-100 px-4 text-base font-semibold text-gray-800" onClick={() => setShowPad((s) => !s)} aria-expanded={showPad}>
+            {temp === '' ? t('batch:new.other_temp') : `${f.digits(temp)} °C`}
           </button>
           {temp !== '' && (
-            <button type="button" className="min-h-12 rounded-full px-3 text-sm font-semibold text-gray-500 underline" onClick={() => setTemp('')}>
+            <button type="button" className="min-h-14 rounded-full px-3 text-sm font-semibold text-gray-500 underline" onClick={() => setTemp('')}>
               {t('batch:new.skip_reading')}
             </button>
           )}

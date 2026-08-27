@@ -10,7 +10,7 @@ from app.models import Mandi
 from app.schemas import MandiOut
 
 router = APIRouter(
-    prefix="/mandis", tags=["mandis"], dependencies=[Depends(rate_limited("public"))]
+    prefix="/mandis", tags=["mandis"], dependencies=[Depends(rate_limited("mandis"))]
 )
 
 

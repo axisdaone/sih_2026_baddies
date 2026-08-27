@@ -9,6 +9,7 @@
   "threshold_25": "Only 25 % shelf life left",
   "critical_title": "Sell now",
   "body": "{{crop}} {{qty}} — about {{range}} left",
+  "body_assumed": "Estimate assumes {{temp}} °C — add a temperature reading.",
   "log": { "title": "Recent alerts", "empty": "No alerts yet." },
   "voice": {
     "welcome": "Welcome to FarmSignal. Sell before it spoils.",

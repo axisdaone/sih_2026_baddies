@@ -18,7 +18,7 @@ What you get:
 
 | Service | Image | Port | Notes |
 |---|---|---|---|
-| `edge` | `nginx:1.27-alpine` + `infra/nginx.conf` | `EDGE_PORT` (80) | Public entry. `/` -> web, `/api` -> api, gzip, 1-year immutable cache on `/assets/*`, `no-cache` on `sw.js`/manifest, 60 req/min/IP on `/api/v1/quality-pass/*`. |
+| `edge` | `nginx:1.27-alpine` + `infra/nginx.conf` | `EDGE_PORT` (80) | Public entry. `/` -> web, `/api` -> api, gzip, 1-year immutable cache on `/assets/*`, `no-cache` on `sw.js`/manifest, 60 req/min/IP on `/api/v1/quality-pass/*`, security headers (strict CSP: same-origin scripts and API calls, OSM tiles allowed for images, `frame-ancestors 'none'`; `X-Frame-Options: DENY`; `Permissions-Policy`). |
 | `web` | built from `apps/web/Dockerfile` | `WEB_PORT` (8080) | Static bundle only; use the edge for a working app (API calls are same-origin `/api`). |
 | `api` | built from `services/api/Dockerfile` | internal 8000 | SQLite on the `api_data` volume; `data/` mounted read-only at `/srv/farmsignal/data`. Health: `GET /api/v1/health`. |
 
@@ -29,17 +29,22 @@ balancer in front of the edge and set `PUBLIC_BASE_URL` to the https origin. The
 Backups (SQLite): `docker compose -f infra/docker-compose.yml exec api sh -c 'sqlite3 /var/lib/farmsignal/farmsignal.db ".backup /var/lib/farmsignal/backup.db"'`
 (or `cp` the file - the API writes in WAL mode, a copy while running is safe enough for the demo).
 
-### Production profile: Postgres 16 + Redis 7
+### Production profile: Postgres 16
 
 ```bash
 export POSTGRES_PASSWORD="$(openssl rand -hex 16)"
 docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml --profile prod up -d --build
 ```
 
-`docker-compose.prod.yml` overrides `DATABASE_URL` to `postgresql+psycopg://farmsignal:...@postgres:5432/farmsignal`
-and sets `REDIS_URL`. Requirements: `psycopg[binary]>=3.2` in `services/api/requirements.txt`
-(PHASE2 for the API; SQLite is enough for the demo). Redis is optional - the API keeps an in-process
-price cache and falls back to it when `REDIS_URL` is unset.
+`docker-compose.prod.yml` overrides `DATABASE_URL` to `postgresql+psycopg://farmsignal:...@postgres:5432/farmsignal`.
+Requirements: `psycopg[binary]>=3.2` in `services/api/requirements.txt` (PHASE2 for the API; SQLite is
+enough for the demo).
+
+There is deliberately no Redis. The price cache and the public-endpoint rate limiter
+(`app/deps.py`, sliding window) are **in-process**: the API reads no `REDIS_URL`, and the PRD allows an
+in-process cache for the demo. That is correct as long as a single API process runs (one `uvicorn`
+worker, one replica - which SQLite requires anyway). Running several API replicas would give each its
+own price cache and its own rate-limit counter; a shared cache is a Phase 2 item, not a compose flag.
 
 ## 2. Environment variables
 
@@ -50,7 +55,12 @@ Names match `services/api/app/config.py` (pydantic-settings, case-insensitive, `
 | `ENV` | `dev` (`prod` in compose) | `dev` / `test` / `prod`; affects logging and debug behaviour. |
 | `DATABASE_URL` | `sqlite:///./farmsignal.db` (compose: `sqlite:////var/lib/farmsignal/farmsignal.db`) | SQLAlchemy URL. Postgres: `postgresql+psycopg://user:pass@host:5432/db`. |
 | `DATA_DIR` | `<repo>/data` (compose: `/srv/farmsignal/data`) | Where `mandis.json`, `agmarknet_snapshot.json`, `demo_scenarios/` live. |
-| `JWT_SECRET` | `farmsignal-dev-secret-change-me` | HS256 key for device tokens. **Change in production.** |
+| `JWT_SECRET` | dev default only; **no usable default in `prod`** | HS256 key for device tokens. The API refuses to start with the dev default when `ENV=prod`; compose requires it (`openssl rand -hex 32`). Flipping `DEMO_MODE` off does not revoke already-minted demo tokens (30-day TTL) - rotate this secret. |
+| `TRUST_PROXY` | `false` (`true` in compose) | Trust `X-Real-IP` / the last `X-Forwarded-For` hop for rate-limit keys. Set `true` only behind nginx / Render / Fly; never on a directly exposed uvicorn. |
+| `AUTH_RATE_LIMIT_PER_MIN` | `10` | Per-IP limit on `POST /auth/device` (the edge applies the same 10 r/m zone). |
+| `DEMO_ADMIN_TOKEN` | unset | Required for `POST /demo/seed?reset=true` (header `X-Demo-Admin-Token`). Reset re-anchors `harvested_at`, so printed QR codes must be regenerated. |
+| `PRICE_REFRESH_COOLDOWN_S` | `300` | Minimum gap between `POST /prices/refresh` calls (protects the shared data.gov.in sample key). |
+| `MAX_REQUEST_BODY_BYTES` | `2097152` | Request body cap (sync batches); the edge enforces `client_max_body_size 2m` too. |
 | `JWT_TTL_DAYS` | `30` | Token lifetime. |
 | `PUBLIC_BASE_URL` | `http://localhost:5173` | Origin encoded in Quality Pass QR codes (`{PUBLIC_BASE_URL}/pass/{batch_id}?h=...`). |
 | `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` | Comma-separated. Behind the edge the app is same-origin, so this only matters for `vite dev`. |
@@ -60,9 +70,8 @@ Names match `services/api/app/config.py` (pydantic-settings, case-insensitive, `
 | `PRICE_POLL_HOURS` | `6` | APScheduler poll interval. |
 | `PRICE_STALE_HOURS` | `30` | Prices older than this are flagged `stale: true` (still served). |
 | `ROAD_FACTOR` / `AVG_SPEED_KMH` / `SAFETY_FACTOR` / `TRANSPORT_COST_PER_KM_INR` | `1.3` / `35` / `0.8` / `12` | Routing constants (contract section 3). |
-| `DEMO_MODE` | `true` | Enables `POST /demo/seed` and `POST /batches/{id}/simulate`. Set `false` for a pilot. |
+| `DEMO_MODE` | `true` in `dev`, **`false` in compose** | The pitch host sets it explicitly. Enables the anonymous demo token from `POST /demo/seed` (= write access to the demo batches), `GET /demo/scenarios`, anonymous `POST /prices/refresh` and `POST /batches/{id}/simulate`. Keep `false` for a pilot. |
 | `RATE_LIMIT_PER_MIN` | `60` | Application-level limit on public endpoints (the edge enforces the same limit at nginx). |
-| `REDIS_URL` | unset | Optional shared cache (prod profile). |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `farmsignal` | Only used by the `prod` profile. |
 | `EDGE_PORT` / `WEB_PORT` | `80` / `8080` | Host ports published by compose. |
 
@@ -71,7 +80,7 @@ any origin.
 
 ## 3. Switching SQLite -> Postgres with Alembic
 
-1. Add `psycopg[binary]>=3.2` to `services/api/requirements.txt` and rebuild the API image.
+1. `psycopg[binary]` is already in `services/api/requirements.txt`; rebuild the API image if it predates that line.
 2. Start Postgres (`--profile prod`, or a managed instance) and point `DATABASE_URL` at it.
 3. Run the migrations against the new database (the API also runs `alembic upgrade head` on startup,
    but doing it explicitly first surfaces errors before traffic arrives):
@@ -125,7 +134,17 @@ the app is in the foreground with connectivity, and threshold alerts appear only
 The demo is run on Android (Chrome) where Workbox Background Sync and Notifications both work; the
 constraint is stated in the PRD risk list and on the Settings page.
 
-## 6. Operational checklist
+## 6. Error tracking and monitoring (what exists today)
+
+The PRD's tech-stack table lists "Sentry SDK -> GlitchTip" for crash visibility. **That is not wired
+in the prototype**: there is no `sentry-sdk` in `services/api/requirements.txt`, no `@sentry/react` in
+`apps/web/package.json`, and no `SENTRY_DSN` / `VITE_SENTRY_DSN` setting. Worker errors, sync
+rejections and poller exceptions are visible only in the rotated container logs (`docker compose logs
+api`, json-file, 10 MB x 3). For the pitch this is acceptable; before a pilot add the two SDKs behind
+optional `SENTRY_DSN` (API, initialised in `create_app()` only when set) and `VITE_SENTRY_DSN` (PWA)
+variables and document them in the table above.
+
+## 7. Operational checklist
 
 - `GET /api/v1/health` returns `{"status": "ok", "prices": {"source": ..., "stale": ...}}`; the compose
   healthchecks and the edge healthcheck both use it.
@@ -134,3 +153,14 @@ constraint is stated in the PRD risk list and on the Settings page.
 - Reset demo data: `docker compose ... down -v` (drops the SQLite volume) then `POST /api/v1/demo/seed`.
 - Rate limit sanity: `for i in $(seq 1 90); do curl -s -o /dev/null -w "%{http_code}\n" http://localhost/api/v1/quality-pass/<id>/verify?head=x; done | sort | uniq -c`
   should show a mix of 200/404 and 429 after the burst of 20 + 60/min is exhausted.
+- Security headers: `curl -sI http://localhost/ | grep -i -E "content-security-policy|x-frame-options"`
+  must show both. If the FPO map tiles stop loading after a change to `infra/nginx.conf`, check that
+  `tile.openstreetmap.org` is still allowed in `img-src` (page policy) and `connect-src` (service-worker
+  policy, `$farmsignal_sw_csp`).
+- Image hygiene before pushing `farmsignal/api:*` anywhere: the API Dockerfile copies the build
+  context, so the context must exclude `.env`, `*.db` (+ `-wal`/`-shm` sidecars), `.venv` and tests via
+  `services/api/.dockerignore`. Verify with `docker run --rm farmsignal/api:local ls -a /srv/api` -
+  nothing but `app/`, `alembic/`, `alembic.ini`, `pyproject.toml` and `requirements*.txt` should be there.
+- Reproducible builds: `services/api/requirements.txt` carries lower bounds only. Pin before the pitch
+  (a `requirements.lock` from `pip freeze` / `pip-compile`, installed by the Dockerfile and CI) so a
+  surprise major release of fastapi/pydantic/PyJWT cannot change the reviewed image overnight.

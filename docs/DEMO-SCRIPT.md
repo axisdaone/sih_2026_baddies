@@ -57,29 +57,37 @@ FarmSignal is that decision layer - software only, offline-first, in the farmer'
 
 1. Open the seeded hero batch (**tomato 500 kg, logged 4 h ago, cool morning readings**).
    Status fresh, confidence high, "~ 47-114 h (most likely 80 h)".
-2. Tap **Sell where?** -> "**Hosur**, 73 km, ~2 h - expected Rs 6,638. Nearest mandi Palacode:
-   Rs 4,083. +63 %." Alternatives: Bengaluru Rs 6,196, Kolar Rs 4,996. Voice: *"sell at Hosur"*.
+2. Tap **Sell where?** -> "**Hosur**, 73 km, ~2 h - expected Rs 6,608. Nearest mandi Palacode:
+   Rs 4,083. +62 %." Alternatives: Bengaluru Rs 6,146, Kolar Rs 4,953. Voice: *"sell at Hosur"*.
 3. Tap **Why?** and read the payload aloud: modal price 1,600 vs 850 Rs/quintal (Agmarknet, reported
    25 Aug, `source: bundled_snapshot` or `agmarknet_live` - point at the label), 72.5 road-km at
-   35 km/h, transit at 28 C, spoilage at arrival 6.2 %, transport Rs 870.
+   35 km/h, transit assumed at 30 C ambient (a cooler yard reading is never assumed to hold in an open
+   pickup), spoilage at arrival 6.5 %, transport Rs 870.
    Say: "Koyambedu pays the most, 1,800, but it is 320 km: the truck costs Rs 3,800 and the batch loses
-   another 11 % on the road - the app shows that in *rejected/alternatives* instead of hiding it."
+   another 11 % on the road - the app shows that further down the ranked list instead of hiding it."
 4. Optional if time: open the **critical** batch (tomato, 60 h ago, hot afternoon). The app says
    "sell now - Palacode, Rs 302" with 3 mandis marked *too far for shelf life*. Say: "It also gives
    unflattering answers. That is the product principle."
 
-### 3:15 - 3:45 The 18 % -> 7 % comparison (simulated, and we say so)
+### 3:15 - 3:45 The 18 % -> 13 % comparison (simulated, and we say so)
 
-Show the comparison card (from `demo_seed.json` -> `loss_comparison`). Explain it honestly:
+Show the comparison slide (numbers from `demo_seed.json` -> `loss_comparison`, pinned to the engine by
+`services/api/tests/test_routing.py`; the app has no card for this, it is a slide). Explain it honestly:
 
-- **Status quo**: the same 500 kg tomato batch sits in the open yard through the `hot_afternoon`
-  profile (6 h at 33-38 C, then 30 C), the trader arrives at hour 10, and it goes to the nearest mandi.
-  Shelf life consumed at sale: **18.3 %**. Realised value at Palacode: Rs 3,462.
-- **With FarmSignal**: same batch, `cool_morning` readings, the app recommends leaving at hour 4 for
-  Hosur; 2.1 h transit at 28 C. Consumed at sale: **6.2 %**. Realised value: Rs 6,638.
-- "Both numbers come from the same kinetics and routing code with snapshot prices. This is a simulation
-  of two handling paths, not a field trial - the UI labels it SIMULATED. The pilot's job is to replace
-  it with measured numbers."
+- **Status quo**: a 500 kg tomato batch sits in the open yard through the `hot_afternoon` profile
+  (6 h at 33-38 C, then 30 C), the trader arrives at hour 10, and it goes to the nearest mandi.
+  Shelf life consumed at sale: **18.3 %**. Realised value at Palacode: Rs 3,462. (At that same hour the
+  app already says "Hosur, Rs 5,438" - "status quo" means ignoring it, not a different model.)
+- **With FarmSignal, same weather**: the same batch and the same `hot_afternoon` readings; the app
+  recommends leaving at hour 4 for Hosur, 2.1 h transit at 37.5 C. Consumed at sale: **13.1 %**.
+  Realised value: Rs 6,082, **+76 %**. The only thing that changed is the decision.
+- **Add the cool-morning harvest** (the hero batch the jury just saw): 4 h of `cool_morning` readings,
+  then Hosur with a 30 C transit -> 6.5 % and Rs 6,608. Say it explicitly: the extra gain comes from the weather and
+  harvest timing, which FarmSignal advises on but does not control, so it is not the headline number.
+- "The percentage is shelf life *consumed* at the moment of sale - both batches are still green - not
+  physical loss. All numbers come from the same kinetics and routing code with snapshot prices. This is
+  a simulation of handling paths, not a field trial - the UI labels it SIMULATED. The pilot's job is to
+  replace it with measured numbers."
 
 ### 3:45 - 4:30 Quality Pass: QR scan and the tamper demo
 

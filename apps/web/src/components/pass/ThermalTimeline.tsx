@@ -125,6 +125,15 @@ export function ThermalTimeline({ readings, harvestedAt, protocol, now }: Therma
         {f.dateTime(new Date(t0))} → {f.dateTime(new Date(t1))}
         {band && ` · ${t('timeline.ideal_band')} ${f.number(band[0])}–${f.number(band[1])} °C`}
       </p>
+      {/* Legend for the dashed segment: an assumption, not a measurement (only when it is drawn). */}
+      {sorted.length > 0 && Date.parse(sorted[0].taken_at) > t0 && (
+        <p className="mt-1 flex items-center gap-2 text-xs text-gray-500" data-testid="assumed-legend">
+          <svg width="28" height="6" viewBox="0 0 28 6" aria-hidden="true" className="shrink-0">
+            <line x1="0" y1="3" x2="28" y2="3" stroke="#9ca3af" strokeWidth="2" strokeDasharray="4 3" />
+          </svg>
+          {t('timeline.assumed_before_first', { temp: f.number(ambient) })}
+        </p>
+      )}
       {sorted.length > 0 && (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-sm">

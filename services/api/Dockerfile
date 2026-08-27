@@ -9,7 +9,10 @@ WORKDIR /srv/api
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+# Copy only what the service needs (never .env / *.db / .venv — see .dockerignore as the backstop).
+COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini pyproject.toml ./
 
 # Bundled data (mandis.json, agmarknet_snapshot.json, demo_scenarios/) is mounted or copied to /data.
 ENV DATA_DIR=/data

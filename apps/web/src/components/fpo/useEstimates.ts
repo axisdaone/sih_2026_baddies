@@ -8,7 +8,7 @@ import type { BatchRow, ReadingRow } from '../../db';
 import { getProtocol } from '../../data';
 import { estimateShelfLife } from '../../worker/client';
 import type { ShelfLifeEstimate } from '../../types';
-import { STATUS_RANK } from '../pass/StatusChip';
+import { STATUS_RANK } from '../StatusPill';
 
 export interface EstimateEntry {
   estimate: ShelfLifeEstimate | null;

@@ -41,7 +41,8 @@ export function RecommendationCard({ batch, readingsCount }: RecommendationCardP
 
       {rec && !top && (
         <p className="rounded-xl bg-red-50 px-3 py-3 text-sm font-semibold text-red-900">
-          {t(`reasons.${rec.reason ?? 'no_feasible_mandi'}`, { defaultValue: rec.reason ?? t('reasons.no_feasible_mandi') })}
+          {/* Unknown future codes fall back to a translated sentence, never the raw code. */}
+          {t(`reasons.${rec.reason ?? 'no_feasible_mandi'}`, { defaultValue: t('reasons.no_feasible_mandi') })}
         </p>
       )}
 
@@ -57,7 +58,7 @@ export function RecommendationCard({ batch, readingsCount }: RecommendationCardP
             </dd>
             <dt className="text-gray-500">{t('rec.price')}</dt>
             <dd className="tabular font-semibold">
-              {f.inr(top.modal_price_per_quintal)}/{t('common:quintal')}
+              {top.modal_price_per_quintal != null ? f.inr(top.modal_price_per_quintal) : '—'}/{t('common:quintal')}
               {top.price_is_stale && <span className="ml-1 chip bg-amber-100 text-amber-900">{t('rec.stale')}</span>}
             </dd>
             <dt className="text-gray-500">{t('rec.expected_value')}</dt>
@@ -66,8 +67,7 @@ export function RecommendationCard({ batch, readingsCount }: RecommendationCardP
               <>
                 <dt className="text-gray-500">{t('rec.uplift', { mandi: rec.nearest.name })}</dt>
                 <dd className={`tabular font-semibold ${rec.uplift_vs_nearest_pct >= 0 ? 'text-fresh' : 'text-critical'}`}>
-                  {rec.uplift_vs_nearest_pct >= 0 ? '+' : ''}
-                  {f.number(rec.uplift_vs_nearest_pct, { maximumFractionDigits: 0 })}%
+                  {f.percent(rec.uplift_vs_nearest_pct / 100, { maximumFractionDigits: 0, signDisplay: 'exceptZero' })}
                 </dd>
               </>
             )}

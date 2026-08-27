@@ -501,3 +501,47 @@ def test_health_reports_snapshot_source(client: TestClient, db: Any) -> None:
     assert body["prices"]["source"] == "bundled_snapshot"
     assert body["prices"]["fetched_at"] == "2026-08-25T03:30:00Z"
     assert body["prices"]["stale"] is True
+
+
+def test_refresh_endpoint_is_single_flight_with_cooldown(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch, db: Any
+) -> None:
+    """A second manual refresh inside PRICE_REFRESH_COOLDOWN_S is skipped without touching the
+    network — and the cooldown counts *attempts*, so a failed fetch is not retried either."""
+    from app.prices import service as service_mod
+    from app.routers import prices as prices_router
+
+    calls = 0
+
+    def factory(settings: Any) -> httpx.AsyncClient:
+        nonlocal calls
+        calls += 1
+        return httpx.AsyncClient(
+            transport=httpx.MockTransport(lambda r: httpx.Response(503, json={})), timeout=1.0
+        )
+
+    monkeypatch.setattr(client_mod, "make_client", factory)
+    monkeypatch.setattr(client_mod, "BACKOFF_SCHEDULE_S", (0.0, 0.0, 0.0))
+    monkeypatch.setattr(prices_router, "live_fetch_enabled", lambda: True)
+    first = client.post("/api/v1/prices/refresh")
+    assert first.status_code == 200 and first.json()["status"] == "failed"
+    assert calls > 0
+    seen = calls
+    second = client.post("/api/v1/prices/refresh")
+    assert second.status_code == 200, second.text
+    body = second.json()
+    assert body["status"] == "skipped"
+    assert body["rows"] == body["fetched"] == body["inserted"] == body["updated"] == 0
+    assert body["error"] is None
+    assert body["source"] == "bundled_snapshot"
+    assert calls == seen  # no network call
+    # A refresh already in flight (poller holding the gate) is skipped the same way.
+    service_mod.reset_refresh_throttle()
+    with service_mod.refresh_gate:
+        assert service_mod.try_refresh_prices(db, live=True) is None
+    assert calls == seen
+    service_mod.reset_refresh_throttle()
+    assert client.post("/api/v1/prices/refresh").json()["status"] == "failed"
+    assert calls > seen
+    _clear_prices(db)
+    ensure_snapshot_loaded(db)

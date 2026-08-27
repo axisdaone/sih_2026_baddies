@@ -13,7 +13,8 @@ from app.deps import DbDep, rate_limited
 from app.schemas import HealthResponse, PriceMeta
 
 log = logging.getLogger(__name__)
-router = APIRouter(tags=["health"], dependencies=[Depends(rate_limited("public"))])
+# Own key: jury traffic on /quality-pass must never 429 the compose / edge health probes.
+router = APIRouter(tags=["health"], dependencies=[Depends(rate_limited("health"))])
 
 
 def _price_status(db: Session) -> PriceMeta:

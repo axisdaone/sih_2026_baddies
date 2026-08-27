@@ -3,6 +3,7 @@ fixture: apps/web/src/engine/hashchain.ts must produce the same hash for the sam
 
 from __future__ import annotations
 
+import math
 import uuid
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta, timezone
@@ -11,6 +12,7 @@ from typing import Any
 from fastapi.testclient import TestClient
 
 from app.db import SessionLocal
+from app.kinetics.engine import round_half_up
 from app.models import Reading
 from app.quality_pass.chain import (
     canonical_payload,
@@ -55,7 +57,9 @@ def test_canonical_formatting() -> None:
     assert canonical_temp(31.5) == "31.5"
     assert canonical_temp(28) == "28.0"
     assert canonical_temp(-0.0) == "0.0"
+    assert canonical_temp(-0.04) == "0.0"  # would be '-0.0' with a bare f"{x:.1f}"
     assert canonical_temp(-1.0) == "-1.0"
+    assert canonical_temp(-0.06) == "-0.1"
     # Sub-seconds are truncated and offsets are normalised to UTC.
     ist = timezone(timedelta(hours=5, minutes=30))
     assert canonical_taken_at(datetime(2026, 8, 27, 12, 0, 0, 999_000, tzinfo=ist)) == (
@@ -226,6 +230,41 @@ def test_append_reading_assigns_seq_and_chain(
     assert len(detail["readings"]) == 2
 
 
+def test_negative_zero_temperature_is_normalised(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    """-0.04 rounds to a zero that must be stored and hashed as +0.0 ('0.0' like TS toFixed)."""
+    rounded = round_half_up(-0.04, 1) + 0.0
+    assert rounded == 0.0 and math.copysign(1.0, rounded) > 0
+    assert canonical_temp(rounded) == "0.0"
+
+    batch_id = _create_batch(client, auth_headers)
+    body = _reading_body(batch_id, 1, -0.04)
+    response = client.post(f"{API}/batches/{batch_id}/readings", json=body, headers=auth_headers)
+    assert response.status_code == 201, response.text
+    reading = response.json()
+    assert reading["temp_c"] == 0.0
+    assert '"temp_c":-0' not in response.text and '"temp_c": -0' not in response.text
+    payload = canonical_payload(
+        batch_id=batch_id,
+        reading_id=body["id"],
+        seq=1,
+        temp_c=0.0,
+        taken_at=datetime.fromisoformat(body["taken_at"].replace("Z", "+00:00")),
+        source="manual",
+        geohash=None,
+    )
+    assert payload.endswith('"temp_c":0.0}')
+    assert reading["hash"] == reading_hash(genesis_hash(batch_id), payload)
+
+    with SessionLocal() as db:
+        stored = db.get(Reading, body["id"])
+        assert stored is not None
+        assert stored.temp_c == 0.0 and math.copysign(1.0, stored.temp_c) > 0
+    verify = client.get(f"{API}/quality-pass/{batch_id}/verify", params={"head": reading["hash"]})
+    assert verify.json()["valid"] is True and verify.json()["head_matches"] is True
+
+
 def test_reading_validation_and_scoping(client: TestClient, auth_headers: dict[str, str]) -> None:
     batch_id = _create_batch(client, auth_headers)
     other_batch = _create_batch(client, auth_headers)
@@ -242,8 +281,11 @@ def test_reading_validation_and_scoping(client: TestClient, auth_headers: dict[s
         headers=auth_headers,
     )
     assert reused.status_code == 409
+    assert reused.json()["detail"] == "id already in use"  # neutral: no ownership oracle
 
-    stranger = client.post(f"{API}/auth/device", json={"device_id": "test-device-0003"})
+    stranger = client.post(
+        f"{API}/auth/device", json={"device_id": "0f3c1a2b-5d6e-4f70-8a9b-0c1d2e3f4a06"}
+    )
     other_headers = {"Authorization": f"Bearer {stranger.json()['token']}"}
     assert client.get(url, headers=other_headers).status_code == 404
     foreign = client.post(url, json=_reading_body(batch_id, 1, 30), headers=other_headers)

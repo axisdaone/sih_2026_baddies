@@ -13,7 +13,8 @@ import { DEMO_ORIGIN, MANDIS } from '../../data';
 import type { PriceRow } from '../../db';
 import { useFormat } from '../../i18n/useFormat';
 import type { Mandi, Recommendation, ShelfLifeStatus } from '../../types';
-import { STATUS_HEX } from '../pass/StatusChip';
+import { SimBadge } from '../SimBadge';
+import { STATUS_HEX } from '../StatusPill';
 import type { UrgencyItem } from './useEstimates';
 
 const PRICE_COMMODITIES = ['Tomato', 'Guava'] as const;
@@ -113,7 +114,8 @@ export function FpoMap({ items, selectedId, onSelect, prices, recommendation, he
                     const q = quotes.get(`${m.id}|${c}`);
                     return (
                       <li key={c}>
-                        {c}: {q ? `${t('map.price', { price: f.inr(q.modal_price) })} · ${t('map.price_reported', { date: q.reported_on })}` : t('map.no_price')}
+                        {t(`crop.${c.toLowerCase()}`, { defaultValue: c })}:{' '}
+                        {q ? `${t('map.price', { price: f.inr(q.modal_price) })} · ${t('map.price_reported', { date: f.date(q.reported_on) })}` : t('map.no_price')}
                       </li>
                     );
                   })}
@@ -122,7 +124,7 @@ export function FpoMap({ items, selectedId, onSelect, prices, recommendation, he
             </Marker>
           );
         })}
-        {located.map(({ batch, estimate }) => (
+        {located.map(({ batch, estimate, simulated }) => (
           <Marker
             key={batch.id}
             position={[batch.origin_lat as number, batch.origin_lon as number]}
@@ -134,6 +136,11 @@ export function FpoMap({ items, selectedId, onSelect, prices, recommendation, he
               <strong>
                 {t(`crop.${batch.crop}`, { defaultValue: batch.crop })} · {f.kg(batch.qty_kg)}
               </strong>
+              {simulated && (
+                <div className="mt-1">
+                  <SimBadge />
+                </div>
+              )}
               <div className="text-xs">
                 {estimate ? f.hoursRange(estimate.remaining_hours.low, estimate.remaining_hours.high, estimate.remaining_hours.mid) : t('list.no_estimate')}
               </div>

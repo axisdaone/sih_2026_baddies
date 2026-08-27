@@ -3,6 +3,7 @@
  * by id. Falls back to evaluating inline where Workers are unavailable (tests, very old browsers).
  */
 import { evaluate } from '../engine';
+import { nowIso } from '../sync/clock';
 import type { KineticsInput, ShelfLifeEstimate } from '../types';
 import type { KineticsRequest, KineticsResponse } from './protocol';
 
@@ -57,14 +58,16 @@ export function terminateKineticsWorker(): void {
 }
 
 /**
- * Evaluate shelf life off the main thread. `input.now` defaults to the current time.
+ * Evaluate shelf life off the main thread. `input.now` defaults to nowIso(), the clock-skew-corrected
+ * current time (contract §7), so every caller — Home/BatchDetail, the FPO dashboard, the offline
+ * Quality Pass — computes against the same "now".
  * Without a Worker global (tests, very old browsers) it evaluates inline and still returns a Promise.
  */
 export async function estimateShelfLife(
   input: Omit<KineticsInput, 'now'> & { now?: string },
   opts: { timeoutMs?: number } = {},
 ): Promise<ShelfLifeEstimate> {
-  const now = input.now ?? new Date().toISOString();
+  const now = input.now ?? nowIso();
   if (typeof Worker === 'undefined') {
     return evaluate(input.protocol, input.harvested_at, input.readings, now);
   }

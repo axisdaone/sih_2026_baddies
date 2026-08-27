@@ -16,7 +16,7 @@ from app.models import SyncOp
 from app.schemas import iso_z, parse_iso_z
 
 API = "/api/v1"
-SYNC_DEVICE = "test-device-sync-01"
+SYNC_DEVICE = "0f3c1a2b-5d6e-4f70-8a9b-0c1d2e3f4a02"
 
 
 @pytest.fixture(scope="module")
@@ -347,3 +347,64 @@ def test_alerts_follow_shelf_life_status(client: TestClient, sync_headers: dict[
         [_op("batch.update", {"id": critical["id"], "status": "sold", "client_seq": 3}, 3)],
     )
     assert all(a["batch_id"] != critical["id"] for a in sold["alerts"])
+
+
+def test_ops_per_request_are_bounded(client: TestClient, sync_headers: dict[str, str]) -> None:
+    from app.schemas.sync import MAX_OPS_PER_REQUEST
+
+    assert MAX_OPS_PER_REQUEST == 200  # mirrors apps/web/src/sync/index.ts MAX_OPS_PER_REQUEST
+    # Cheap ops (rejected before touching a batch) keep the test fast; the bound is structural.
+    cheap = [_op("batch.update", {"notes": "x", "client_seq": 1}, i) for i in range(201)]
+    _sync(client, sync_headers, cheap, expect=422)
+    data = _sync(client, sync_headers, cheap[:200])
+    assert len(data["results"]) == 200
+    assert all(r["status"] == "rejected" for r in data["results"])
+
+
+def test_oversized_payload_and_seq_are_rejected(
+    client: TestClient, sync_headers: dict[str, str]
+) -> None:
+    fat = _batch_payload(**{f"junk_{i}": i for i in range(40)})
+    _sync(client, sync_headers, [_op("batch.create", fat, 1)], expect=422)
+    huge_seq = _op("batch.create", _batch_payload(), 2**31)
+    _sync(client, sync_headers, [huge_seq], expect=422)
+    # A per-op client_seq above the 32-bit column is a per-op rejection, not a 500.
+    data = _sync(
+        client, sync_headers, [_op("batch.create", _batch_payload(client_seq=2**31), 3)]
+    )
+    assert data["results"][0]["status"] == "rejected"
+    assert "client_seq" in data["results"][0]["error"]
+
+
+def test_request_body_size_is_capped(
+    client: TestClient, sync_headers: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "MAX_REQUEST_BODY_BYTES", 512)
+    ops = [_op("batch.create", _batch_payload(), i) for i in range(3)]
+    body = {"device_id": SYNC_DEVICE, "client_now": iso_z(_now()), "ops": ops}
+    response = client.post(f"{API}/sync", json=body, headers=sync_headers)
+    assert response.status_code == 413
+    small = client.post(
+        f"{API}/sync",
+        json={"device_id": SYNC_DEVICE, "client_now": iso_z(_now()), "ops": []},
+        headers=sync_headers,
+    )
+    assert small.status_code == 200
+
+
+def test_internal_errors_are_not_echoed(
+    client: TestClient, sync_headers: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.services import sync as sync_service
+
+    def boom(*args: Any, **kwargs: Any) -> Any:
+        raise RuntimeError("database is locked")
+
+    monkeypatch.setattr(sync_service, "upsert_batch", boom)
+    data = _sync(client, sync_headers, [_op("batch.create", _batch_payload(), 1)])
+    result = data["results"][0]
+    assert result["status"] == "rejected"
+    assert result["error"] == "internal error"
+    assert "RuntimeError" not in result["error"] and "locked" not in result["error"]

@@ -79,7 +79,8 @@ export function SimPlayer({ batch, readings, disabled = false }: SimPlayerProps)
           </option>
         ))}
       </select>
-      <p className="mb-3 text-xs text-gray-500">{scenario.description}</p>
+      {/* Translated narrative; a scenario added to the bundle without a translation shows its English JSON text. */}
+      <p className="mb-3 text-xs text-gray-500">{t(`scenario_desc.${scenario.id}`, { defaultValue: scenario.description })}</p>
 
       <ol className="mb-3 flex flex-wrap gap-1.5" aria-label={t('sim.steps')}>
         {steps.map((s) => (
@@ -90,7 +91,7 @@ export function SimPlayer({ batch, readings, disabled = false }: SimPlayerProps)
             }`}
             title={s.state === 'future' ? t('sim.future_step') : f.dateTime(s.taken_at)}
           >
-            +{f.number(s.offset_hours)} h · {f.number(s.temp_c)} °C
+            +{f.number(s.offset_hours)} {t('common:hours_short')} · {f.number(s.temp_c)} °C
           </li>
         ))}
       </ol>

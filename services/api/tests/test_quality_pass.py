@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 from app.config import get_settings
 from app.db import SessionLocal
-from app.models import PassEvent
+from app.models import PassEvent, Reading
 from app.quality_pass.qr import pass_page_url
 from app.schemas import iso_z
 from tests.conftest import DEVICE_ID
@@ -106,7 +106,9 @@ def test_payload_without_readings_or_region(
 
 
 def test_display_name_only_when_opted_in(client: TestClient) -> None:
-    login = client.post(f"{API}/auth/device", json={"device_id": "test-device-anon-01"})
+    login = client.post(
+        f"{API}/auth/device", json={"device_id": "0f3c1a2b-5d6e-4f70-8a9b-0c1d2e3f4a05"}
+    )
     headers = {"Authorization": f"Bearer {login.json()['token']}"}
     body = _create_batch(client, headers)
     payload = client.get(f"{API}/quality-pass/{body['id']}").json()
@@ -146,16 +148,71 @@ def test_verify_and_audit_events(client: TestClient, auth_headers: dict[str, str
     assert upper["head_matches"] is True
     assert client.get(verify_url, params={"head": "abc"}).status_code == 422
     assert client.get(verify_url, params={"head": "zz" * 8}).status_code == 422
-    assert client.get(verify_url).status_code == 422
+    no_head = client.get(verify_url)
+    assert no_head.status_code == 200, no_head.text  # `head` is optional
+    assert no_head.json()["valid"] is True and no_head.json()["head_matches"] is False
 
     assert client.get(f"{API}/quality-pass/{batch_id}").status_code == 200
     with SessionLocal() as db:
         events = db.query(PassEvent).filter_by(batch_id=batch_id).all()
     kinds = sorted(e.event for e in events)
-    assert kinds.count("verify") == 2
+    assert kinds.count("verify") == 3
     assert kinds.count("view") == 1
     assert all(len(e.ip_hash) == 64 and e.ip_hash != "testclient" for e in events)
     assert all(e.at.tzinfo is not None for e in events)
+
+
+def test_verify_without_head_reports_chain_consistency(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    """GET /quality-pass/{id}/verify with no `head`: 200, `valid` from the recomputed chain,
+    `head_matches` false (nothing to compare). A wrong head alone is not a tamper signal."""
+    body = _create_batch(client, auth_headers)
+    batch_id = body["id"]
+    verify_url = f"{API}/quality-pass/{batch_id}/verify"
+
+    empty = client.get(verify_url)
+    assert empty.status_code == 200, empty.text
+    assert empty.json() == {
+        "valid": True,
+        "chain_head": None,
+        "length": 0,
+        "first_bad_seq": None,
+        "head_matches": False,
+    }
+
+    sim = client.post(
+        f"{API}/batches/{batch_id}/simulate", params={"profile": "reefer_van"}, headers=auth_headers
+    )
+    assert sim.status_code == 200, sim.text
+    head = sim.json()["chain_head"]
+    assert head and len(head) == 64
+
+    no_head = client.get(verify_url).json()
+    assert no_head["valid"] is True
+    assert no_head["head_matches"] is False
+    assert no_head["chain_head"] == head
+    assert no_head["length"] == 7 and no_head["first_bad_seq"] is None
+
+    wrong = client.get(verify_url, params={"head": "f" * 16}).json()
+    assert wrong["valid"] is True  # the chain itself is intact ...
+    assert wrong["head_matches"] is False  # ... but it is not the chain the caller holds
+    assert wrong["chain_head"] == head
+
+    right = client.get(verify_url, params={"head": head[:16]}).json()
+    assert right["valid"] is True and right["head_matches"] is True
+
+    with SessionLocal() as db:
+        row = db.query(Reading).filter_by(batch_id=batch_id, seq=3).one()
+        row.temp_c = 40.0
+        db.commit()
+    tampered = client.get(verify_url).json()
+    assert tampered["valid"] is False
+    assert tampered["first_bad_seq"] == 3
+    assert tampered["head_matches"] is False
+    assert tampered["chain_head"] != head
+    with_head = client.get(verify_url, params={"head": head[:16]}).json()
+    assert with_head["valid"] is False and with_head["head_matches"] is False
 
 
 def test_unknown_batch_404(client: TestClient) -> None:

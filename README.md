@@ -7,7 +7,7 @@ and pharmaceuticals (Theme: Transportation & Logistics). Team Baddies.
 A farmer or FPO logs a harvest in under 30 seconds - offline. A crop-specific kinetic spoilage model
 turns the batch's time-temperature history into a live **shelf-life range** on the phone. The routing
 engine combines that range with **live Agmarknet mandi prices** and travel time into one explainable
-command: *"Sell at Hosur, 2 h away - expected Rs 6,638, +63 % vs the nearest mandi."* A tamper-evident
+command: *"Sell at Hosur, 2 h away - expected Rs 6,608, +62 % vs the nearest mandi."* A tamper-evident
 **Quality Pass** (QR + SHA-256 hash chain) turns the thermal history into negotiating leverage. The same
 engine evaluates a pharma 2-8 C excursion budget from a data file - the Phase 2 pharma path is already
 running in tests.
@@ -85,7 +85,7 @@ These are product rules, enforced in code and tests, not slide-ware:
 1. **Shelf life is always a range** ("~ 42-104 h, most likely 72 h") with a confidence level that
    reflects data recency; never a false-precision scalar.
 2. **Simulated data is always labelled.** Every simulated reading, recommendation built on it, and the
-   18 % vs 7 % comparison carry a `SIMULATED` chip. Real Agmarknet prices carry their source
+   18 % vs 13 % comparison carry a `SIMULATED` chip. Real Agmarknet prices carry their source
    (`agmarknet_live` / `agmarknet_cache` / `bundled_snapshot`) and reported date.
 3. **Every recommendation is explainable**: the "why" screen shows all inputs (price, date, distance,
    transit temperature, spoilage at arrival, transport cost) and the mandis that were rejected and why.

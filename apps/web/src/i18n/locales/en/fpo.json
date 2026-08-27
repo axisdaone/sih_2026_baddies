@@ -20,6 +20,7 @@
     "no_estimate": "No estimate",
     "closed": "Closed",
     "select": "Select batch {{name}}",
+    "open": "Open batch {{name}}",
     "selected": "Selected",
     "no_location": "No location"
   },

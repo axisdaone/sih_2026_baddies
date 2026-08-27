@@ -99,6 +99,7 @@ def test_golden_case(case: dict[str, Any]) -> None:
         assert estimate.breach is not None
         assert estimate.breach.type == threshold["type"]
         assert estimate.breach.value_c == pytest.approx(threshold["value_c"])
+        assert estimate.breach.label == expected["breach_type"]
         assert any(r["id"] == estimate.breach.reading_id for r in case["readings"])
 
 

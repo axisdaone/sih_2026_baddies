@@ -44,10 +44,16 @@
     "infeasible_travel_time": "Travel time exceeds remaining shelf life",
     "too_far_for_shelf_life": "Too far for the remaining shelf life",
     "no_price": "No price available for this crop",
+    "no_prices": "No mandi has a price for this crop right now",
     "origin_assumed": "Batch location was assumed",
     "batch_spoiled": "Batch is spoiled — no mandi is worth the trip",
     "no_feasible_mandi": "No mandi can be reached in time",
-    "feasible": "Reachable in time"
+    "feasible": "Reachable in time",
+    "not_worth_the_trip": "Not worth the trip: transport cost exceeds the expected sale value",
+    "negative_expected_value": "Transport cost exceeds the expected sale value",
+    "no_profitable_mandi": "No mandi is worth the trip at this quantity",
+    "risky_in_pessimistic_case": "Reachable on the most-likely estimate, but not in the worst case",
+    "safe_in_worst_case": "Reachable even in the worst case"
   },
   "home": {
     "empty_title": "No batches yet",
@@ -55,15 +61,16 @@
     "log_harvest": "Log harvest",
     "demo_hint": "Want to see it in action?",
     "demo_link": "Load demo data in Settings",
-    "open_count": "{{count}} open",
+    "open_count": "{{count, num}} open",
     "open_list": "Open batches",
-    "closed": "Closed batches ({{count}})"
+    "closed": "Closed batches ({{count, num}})"
   },
   "card": {
     "aria": "{{crop}}, {{qty}}",
     "harvested": "Harvested {{time}}",
     "unsynced": "Not yet synced",
-    "estimating": "Estimating shelf life…"
+    "estimating": "Estimating shelf life…",
+    "temp_assumed": "Temp. assumed"
   },
   "countdown": {
     "aria": "Shelf life countdown",
@@ -89,7 +96,7 @@
     "add_title": "Add temperature reading",
     "temp_label": "Temperature",
     "quick": "Quick values",
-    "invalid": "Enter a temperature between {{min}} and {{max}} °C",
+    "invalid": "Enter a temperature between {{min, num}} and {{max, num}} °C",
     "save": "Save reading"
   },
   "pad": {
@@ -147,7 +154,7 @@
     "future_step": "Still in the future for this batch",
     "only_past": "This batch was harvested {{hours}} ago, so only profile steps up to that offset can be played — the engine ignores readings from the future.",
     "play_next": "Play next step",
-    "play_all": "Play all ({{count}})"
+    "play_all": "Play all ({{count, num}})"
   },
   "scenarios": {
     "cool_morning": "Cool morning (good practice)",
@@ -157,6 +164,15 @@
     "pre_cooled": "Pre-cooled (best practice)",
     "pharma_excursion": "Pharma 2–8 °C excursion",
     "pharma_freeze": "Pharma freeze breach"
+  },
+  "scenario_desc": {
+    "cool_morning": "Harvest at 06:00 in a cool field (22 °C) that warms steadily to 33 °C by 14:00. The typical good-practice day in the Dharmapuri belt.",
+    "hot_afternoon": "Batch left in an open yard at 33–38 °C for 6 h waiting for a trader, then 30 °C into the evening.",
+    "heat_spike": "30 °C baseline with a 2 h spike to 42 °C at hour 3 (e.g. under a tarpaulin or in a closed van), then back to 30 °C. 42 °C is below the 45 °C hard threshold.",
+    "reefer_van": "1 h at 30 °C ambient, then loaded into a 12 °C reefer van for 10 h.",
+    "pre_cooled": "30 °C at harvest, pre-cooled to 15 °C within an hour and held at 12 °C for the rest of 12 h.",
+    "pharma_excursion": "5 °C baseline, a 4 h excursion to 15 °C (hours 2–6), then back to 5 °C. Within the 25 °C hard threshold.",
+    "pharma_freeze": "5 °C baseline, a 30-minute dip to −1 °C at hour 2, then back to 5 °C."
   },
   "rec": {
     "title": "Where to sell",
@@ -176,6 +192,14 @@
     "price_source": "Prices: {{source}}",
     "why": "Why?",
     "refresh": "Refresh"
+  },
+  "loss": {
+    "heading": "Loss comparison",
+    "baseline": "Status quo",
+    "farmsignal": "With FarmSignal",
+    "consumed": "Shelf life consumed at sale",
+    "value": "Realised value",
+    "mandi": "Mandi"
   },
   "why": {
     "back_to_batch": "Back to batch",
@@ -199,6 +223,7 @@
     "infeasible": "Rejected",
     "role_top": "Recommended",
     "role_alternative": "Alternative",
+    "role_reachable": "Reachable",
     "role_nearest": "Nearest",
     "role_rejected": "Rejected",
     "constants": "Constants used",

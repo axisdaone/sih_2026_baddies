@@ -2,13 +2,16 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.deps import CurrentFarmer, DbDep
+from app.deps import CurrentFarmer, DbDep, farmer_rate_limited
 from app.schemas import SyncRequest, SyncResponse
 from app.services.sync import apply_sync
 
-router = APIRouter(prefix="/sync", tags=["sync"])
+# Keyed per farmer (not IP): the request-count bound that complements MAX_OPS_PER_REQUEST.
+router = APIRouter(
+    prefix="/sync", tags=["sync"], dependencies=[Depends(farmer_rate_limited("sync"))]
+)
 
 
 @router.post("", response_model=SyncResponse)

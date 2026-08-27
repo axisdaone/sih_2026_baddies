@@ -18,6 +18,9 @@ from app.schemas import BatchCreate, BatchOut, BatchPatch, ReadingOut, ShelfLife
 from app.services import ConflictError, InvalidRequestError, NotFoundError
 from app.services.geo import origin_geohash
 
+# Uniform 409 detail for a client id that belongs to someone / something else.
+ID_IN_USE = "id already in use"
+
 
 def upsert_batch(db: Session, farmer: Farmer, body: BatchCreate) -> tuple[Batch, bool]:
     """Create the batch or return the existing one (same id, same farmer).
@@ -178,5 +181,6 @@ def _owned(batch: Batch, farmer: Farmer, status_code: int = 409) -> Batch:
     if batch.farmer_id != farmer.id:
         if status_code == 404:
             raise NotFoundError("batch not found")
-        raise ConflictError("batch id already exists for another farmer")
+        # Neutral wording (same as the reading branch): no ownership oracle for foreign ids.
+        raise ConflictError(ID_IN_USE)
     return batch

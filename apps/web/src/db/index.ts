@@ -1,9 +1,14 @@
 /**
  * Dexie database `farmsignal` v1 (contract §9): batches, readings, ops (outbox), prices, mandis, meta.
  * Row types extend the wire types with local-only bookkeeping (synced flags, outbox status).
+ *
+ * Schema changes: keep `version(1)` declared and add `this.version(2).stores({...}).upgrade(tx => ...)`
+ * after it — Dexie runs the upgrade chain for devices still on v1.
  */
 import Dexie, { type Table } from 'dexie';
 import type { Batch, Mandi, PriceQuote, ReadingCreate, SyncOp, SyncOpStatus } from '../types';
+import { notify } from '../alerts/toast';
+import i18n from '../i18n';
 
 export const DB_NAME = 'farmsignal';
 export const DB_VERSION = 1;
@@ -20,12 +25,19 @@ export interface ReadingRow extends ReadingCreate {
   synced: boolean;
 }
 
-/** Outbox row (contract §7). */
+/**
+ * Outbox row (contract §7). `last_attempt_at` drives the retry backoff for server-rejected ops and
+ * `skew_applied_seconds` records the clock skew the payload timestamps were corrected with when the
+ * op was enqueued (so /sync can be told the matching `client_now`). Both are local-only, non-indexed
+ * and optional so rows written by older builds still load.
+ */
 export type OpRow = SyncOp & {
   status: SyncOpStatus;
   created_at: string;
   attempts: number;
   last_error: string | null;
+  last_attempt_at?: string | null;
+  skew_applied_seconds?: number;
 };
 
 /** Cached price; auto-incremented local id. */
@@ -45,6 +57,10 @@ export const META_KEYS = {
   deviceId: 'device_id',
   farmerId: 'farmer_id',
   displayName: 'display_name',
+  /** boolean: the farmer opted in/out of showing `display_name` on the public pass (undefined = never asked). */
+  shareDisplayName: 'share_display_name',
+  /** boolean: a display-name change has not reached POST /auth/device yet. */
+  displayNameDirty: 'display_name_dirty',
   clockSkewSeconds: 'clock_skew_seconds',
   lastSyncAt: 'last_sync_at',
   clientSeq: 'client_seq',
@@ -68,6 +84,16 @@ export class FarmSignalDB extends Dexie {
       prices: '++id, commodity, mandi_id',
       mandis: 'id',
       meta: 'key',
+    });
+
+    // Another tab still holds the database open (blocks delete() / a version bump): tell the user.
+    this.on('blocked', () => {
+      notify.info(i18n.t('close_other_tabs', { ns: 'common' }));
+    });
+    // Another tab deleted / upgraded the database: release our connection and reload onto the new schema.
+    this.on('versionchange', () => {
+      this.close();
+      if (typeof location !== 'undefined' && typeof location.reload === 'function') location.reload();
     });
   }
 

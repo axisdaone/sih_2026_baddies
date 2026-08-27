@@ -48,6 +48,9 @@ UtcDatetime = Annotated[
 
 UuidStr = Annotated[str, StringConstraints(pattern=UUID_RE)]
 
+# `client_seq` columns are 32-bit integers; LWW by seq also means a huge value freezes a batch.
+MAX_CLIENT_SEQ = 2**31 - 1
+
 
 class ApiModel(BaseModel):
     """Base for all wire schemas: ORM-friendly, alias-aware (`from` in Segment)."""

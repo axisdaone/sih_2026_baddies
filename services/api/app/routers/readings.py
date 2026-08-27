@@ -2,15 +2,19 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, Depends, Response
 
-from app.deps import CurrentFarmer, DbDep
+from app.deps import CurrentFarmer, DbDep, farmer_rate_limited
 from app.schemas import ReadingCreate, ReadingOut
 from app.services.batches import get_batch_for_farmer
 from app.services.readings import append_reading as _append_reading
 from app.services.readings import list_readings as _list_readings
 
-router = APIRouter(prefix="/batches/{batch_id}/readings", tags=["readings"])
+router = APIRouter(
+    prefix="/batches/{batch_id}/readings",
+    tags=["readings"],
+    dependencies=[Depends(farmer_rate_limited("farmer"))],
+)
 
 
 @router.post("", response_model=ReadingOut, status_code=201)

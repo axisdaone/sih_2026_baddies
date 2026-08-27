@@ -30,6 +30,8 @@ import taAlerts from './locales/ta/alerts.json';
 import taSettings from './locales/ta/settings.json';
 
 import type { Locale } from '../types';
+// Only called from the init block below; format.ts imports this module lazily (function-scope use).
+import { registerNumeralFormatter } from './format';
 export type { Locale } from '../types';
 
 export const SUPPORTED_LANGS: readonly Locale[] = ['en', 'hi', 'ta'] as const;
@@ -95,6 +97,9 @@ if (!i18n.isInitialized) {
   i18n.on('languageChanged', (lng) => {
     if (typeof document !== 'undefined') document.documentElement.lang = lng;
   });
+
+  // `{{count, num}}` placeholders follow the native-numerals preference (contract §9).
+  registerNumeralFormatter(i18n);
 }
 
 export default i18n;

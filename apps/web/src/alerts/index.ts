@@ -9,7 +9,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db';
 import i18n from '../i18n';
 import { currentLocale } from '../i18n';
-import { formatHoursRange, formatKg } from '../i18n/format';
+import { formatHoursRange, formatKg, formatNumber } from '../i18n/format';
 import { play } from '../voice';
 import type { AlertThreshold, ShelfLifeEstimate, ShelfLifeStatus, VoiceKey } from '../types';
 import { ALERT_THRESHOLDS } from '../types';
@@ -42,6 +42,9 @@ export interface AlertEvent {
   crop?: string;
   qty_kg?: number;
   simulated?: boolean;
+  /** Temperature the estimate used; `current_temp_assumed` = no reading, protocol ambient assumed. Optional: older 'alertlog' entries lack them. */
+  current_temp_c?: number;
+  current_temp_assumed?: boolean;
 }
 
 const VOICE_FOR_THRESHOLD: Record<AlertThreshold, VoiceKey> = { 75: 'alert_75', 50: 'alert_50', 25: 'alert_25' };
@@ -74,14 +77,20 @@ async function batchContext(batchId: string): Promise<{ crop?: string; qty_kg?: 
   }
 }
 
-function describe(event: AlertEvent): { title: string; body: string } {
+/** Title + body for one event (feeds both the toast and the system notification). */
+export function describe(event: AlertEvent): { title: string; body: string } {
   const locale = currentLocale();
   const t = (key: string, opts: Record<string, unknown> = {}) => i18n.t(key, { ns: 'alerts', lng: locale, ...opts });
   const crop = event.crop ? t(`crop.${event.crop}`, { defaultValue: event.crop }) : t('a_batch');
   const qty = typeof event.qty_kg === 'number' ? formatKg(event.qty_kg, locale) : '';
   const range = formatHoursRange(event.remaining_hours.low, event.remaining_hours.high, event.remaining_hours.mid, locale);
   const title = event.threshold === 'critical' ? t('critical_title') : t(`threshold_${event.threshold}`);
-  return { title, body: t('body', { crop, qty, range }) };
+  let body = t('body', { crop, qty, range });
+  // Honesty cue (PRD): the range came from an assumed temperature, not a reading.
+  if (event.current_temp_assumed && typeof event.current_temp_c === 'number') {
+    body += ` ${t('body_assumed', { temp: formatNumber(event.current_temp_c, locale) })}`;
+  }
+  return { title, body };
 }
 
 async function appendLog(event: AlertEvent): Promise<void> {
@@ -147,6 +156,7 @@ export async function checkAlerts(batchId: string, estimate: ShelfLifeEstimate):
   if (fresh.length === 0 && !firstCritical) return [];
 
   const ctx = await batchContext(batchId);
+  const temp = { current_temp_c: estimate.current_temp_c, current_temp_assumed: estimate.current_temp_assumed };
   const events: AlertEvent[] = fresh.map((th) => ({
     id: newId(),
     batch_id: batchId,
@@ -155,9 +165,10 @@ export async function checkAlerts(batchId: string, estimate: ShelfLifeEstimate):
     at: now,
     remaining_hours: estimate.remaining_hours,
     ...ctx,
+    ...temp,
   }));
   if (firstCritical) {
-    events.push({ id: newId(), batch_id: batchId, threshold: 'critical', status: estimate.status, at: now, remaining_hours: estimate.remaining_hours, ...ctx });
+    events.push({ id: newId(), batch_id: batchId, threshold: 'critical', status: estimate.status, at: now, remaining_hours: estimate.remaining_hours, ...ctx, ...temp });
   }
 
   for (const event of events) {
@@ -175,10 +186,12 @@ export async function checkAlerts(batchId: string, estimate: ShelfLifeEstimate):
   }
 
   // One system notification for the most urgent event (thresholds are sorted 75 → 25; critical wins).
+  // The OS shade has no SIMULATED chip, so the label goes into the title (NFR: simulated data is always labelled).
   const urgent = events[events.length - 1];
   if (urgent) {
     const { title, body } = describe(urgent);
-    void systemNotify(title, body, `fs-alert-${batchId}`);
+    const simPrefix = urgent.simulated ? `${i18n.t('simulated', { ns: 'common', lng: currentLocale() })} · ` : '';
+    void systemNotify(simPrefix + title, body, `fs-alert-${batchId}`);
   }
 
   // Voice: the most urgent new threshold only (clips would otherwise overlap), then sell_now.

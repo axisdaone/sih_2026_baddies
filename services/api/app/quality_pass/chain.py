@@ -10,7 +10,8 @@ Canonical form — pinned byte-for-byte so Python and `apps/web/src/engine/hashc
 * keys in exactly that (sorted) order, no whitespace;
 * `taken_at` is UTC at seconds precision (sub-seconds truncated) with a literal 'Z';
 * `temp_c` is already rounded to 1 dp at input time and rendered like `28.0` / `31.5`
-  (Python `f"{x:.1f}"`, TS `x.toFixed(1)`); negative zero renders as `0.0`;
+  (Python `f"{x:.1f}"`, TS `x.toFixed(1)`); negative zero renders as `0.0` (both the stored
+  value and the canonical string are normalised with `x = round(x, 1) + 0.0`);
 * `geohash` renders as the JSON literal `null` when absent, else a JSON string.
 """
 
@@ -43,10 +44,14 @@ def canonical_taken_at(taken_at: datetime) -> str:
 
 
 def canonical_temp(temp_c: float) -> str:
-    """Exactly one decimal; `-0.0` is normalised to `0.0` like JS `toFixed`."""
-    value = float(temp_c)
-    if value == 0.0:
-        value = 0.0
+    """Exactly one decimal; a negative zero is normalised to `0.0` like JS `toFixed`.
+
+    Python renders `f"{-0.04:.1f}"` (and `-0.0`) as `-0.0` while TS `(-0).toFixed(1)` is
+    `0.0`; `round(x, 1) + 0.0` turns the negative zero into a positive one (IEEE-754:
+    `-0.0 + 0.0 == +0.0`). Inputs are already rounded half-up to 1 dp by `append_reading`,
+    so the `round` here never changes a stored value; it only pins the zero's sign.
+    """
+    value = round(float(temp_c), 1) + 0.0
     return f"{value:.1f}"
 
 

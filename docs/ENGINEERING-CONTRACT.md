@@ -169,7 +169,8 @@ Inputs: batch (protocol, qty_kg, origin lat/lon), current `ShelfLifeEstimate`, m
 
 Constants (in `config`, overridable): `ROAD_FACTOR = 1.3`, `AVG_SPEED_KMH = 35`,
 `SAFETY_FACTOR = 0.8`, `TRANSPORT_COST_PER_KM_INR = 12` (small pickup/tempo trip cost),
-`TRANSIT_TEMP_C = protocol.default_ambient_c` unless the batch has a reading ≤ 2 h old (then use it).
+`TRANSIT_TEMP_C = max(last reading if ≤ 2 h old else default_ambient_c, protocol.default_ambient_c)` —
+a fresh reading can only make the trip *warmer* than ambient, never cooler (no vehicle/reefer input in v1).
 
 For each mandi that has a price for the protocol's commodity:
 
@@ -177,17 +178,24 @@ For each mandi that has a price for the protocol's commodity:
 straight_km        = haversine(origin, mandi)
 distance_km        = straight_km × ROAD_FACTOR
 travel_hours       = distance_km / AVG_SPEED_KMH
-feasible           = travel_hours < remaining_hours.mid × SAFETY_FACTOR
+time_ok            = travel_hours < remaining_at(TRANSIT_TEMP, mid) × SAFETY_FACTOR
+                     (remaining re-projected from consumed_now at the transit temperature, so a stale
+                      cold reading can never make a trip "reachable" that arrives spoiled)
 consumed_at_arrival= clamp(consumed_now + travel_hours × r(TRANSIT_TEMP) / L_ref, 0, 1)   (mid scenario)
 spoilage_at_arrival= consumed_at_arrival                      (v1: linear value loss, stated in explanation)
 gross_value_inr    = modal_price_per_quintal / 100 × qty_kg × (1 − spoilage_at_arrival)
 transport_cost_inr = distance_km × TRANSPORT_COST_PER_KM_INR
 expected_value_inr = gross_value_inr − transport_cost_inr
+feasible           = time_ok AND expected_value_inr > 0
+feasible_pessimistic = travel_hours < remaining_at(TRANSIT_TEMP, low) × SAFETY_FACTOR   (shown as a "safe even in the worst case" flag)
 ```
 
-Rank feasible mandis by `expected_value_inr` desc. Output `top` + up to 2 `alternatives`, plus
-`nearest` (closest mandi regardless of rank) and `uplift_vs_nearest_pct`. Infeasible mandis are
-returned in `rejected[]` with a `reason` (`"too_far_for_shelf_life"`, `"no_price"`). Every candidate
+Rank feasible mandis: pessimistically-safe first, then fresh-priced before stale, then
+`expected_value_inr` desc (plain value order when all prices share one source). Output `top` + up to 2
+`alternatives`, the full `ranked[]` list (so the Why screen hides nothing), plus `nearest` (closest mandi
+regardless of rank) and `uplift_vs_nearest_pct` (0 when nearest is top; null when nearest has no
+positive value). Infeasible mandis are returned in `rejected[]` with reason codes
+(`infeasible_travel_time`, `no_price`, `negative_value`). Every candidate
 carries the full explanation payload (all inputs above + `price_reported_on`, `price_fetched_at`,
 `price_is_stale`, `price_source: "agmarknet_live" | "agmarknet_cache" | "bundled_snapshot"`).
 Recommendation is `model_version: "routing-1.0"`. If the batch is `spoiled`, return `top: null` with
@@ -209,7 +217,9 @@ prev_hash = previous reading's hash, or sha256_hex("farmsignal:" + batch_id) for
 
 `chain_head` = last hash. The QR encodes `{PUBLIC_BASE_URL}/pass/{batch_id}?h={chain_head[:16]}`.
 `GET /api/v1/quality-pass/{batch_id}/verify?head=…` recomputes the chain and returns
-`{valid, chain_head, length, first_bad_seq}`. The client mirrors the same hash for offline display
+`{valid, chain_head, length, first_bad_seq, head_matches}` — `head` is optional; without it the
+response still reports internal consistency with `head_matches: false`; when `valid` is false the
+client must not compare heads. The client mirrors the same hash for offline display
 (`apps/web/src/engine/hashchain.ts`, using `crypto.subtle`).
 
 ---
@@ -286,7 +296,8 @@ interface MandiCandidate { mandi_id: string; name: string; district: string; lat
   expected_value_inr: number; reasons: string[]; }
 interface Recommendation { batch_id: string; computed_at: string; model_version: string;
   shelf_life: ShelfLifeEstimate; top: MandiCandidate | null; alternatives: MandiCandidate[];
-  nearest: MandiCandidate | null; rejected: MandiCandidate[]; uplift_vs_nearest_pct: number | null;
+  nearest: MandiCandidate | null; rejected: MandiCandidate[]; ranked: MandiCandidate[];
+  uplift_vs_nearest_pct: number | null;
   reason?: string; constants: { road_factor: number; avg_speed_kmh: number; safety_factor: number;
   transport_cost_per_km_inr: number; }; simulated: boolean; }
 ```
@@ -316,8 +327,16 @@ use last-writer-wins by `client_seq`. **Clock skew**: `clock_skew_seconds = clie
 if `|skew| > 120 s` the server shifts every `taken_at`/`harvested_at` in that request by `−skew` and
 flags `clock_adjusted: true` in the result. Client stores skew and applies it to local kinetics.
 
-Client trigger points: `online` event, app foreground, every 60 s while online, and Workbox
-Background Sync (`farmsignal-sync` queue) as a belt-and-braces retry for the POST itself.
+Client trigger points: `online` event, app foreground, every 60 s while online. The Dexie outbox is the
+sole durable retry queue: ops left `inflight` by a dead tab are reset to `pending` at the start of the
+next drain; server-rejected ops back off exponentially (2^attempts min, cap 1 h) and are parked after
+5 attempts for the user to discard. Workbox Background Sync is intentionally **not** used for
+`POST /sync` — a verbatim replay would carry a stale `client_now` that the skew correction would misread.
+
+Skew bookkeeping on the client: every op records the skew it was enqueued under; drain sends one
+`/sync` request per contiguous run of equal skew with `client_now = now − skew`, and stores
+`skew + clock_skew_seconds` (the server's residual) so the correction accumulates instead of oscillating.
+All local kinetics use `nowIso()` = device clock − stored skew.
 
 ---
 
@@ -343,7 +362,8 @@ Madurai, Coimbatore, Salem, Trichy, Hosur, Vellore, Kolar, Bengaluru).
   QualityPass (public, works from server payload or local data) · `/fpo` FPO dashboard · `/settings`.
 - i18n namespaces (files per locale): `common`, `batch`, `pass`, `fpo`, `alerts`. Locales `en`, `hi`, `ta`.
   Numerals: `Intl.NumberFormat(locale)`; Hindi uses `hi-IN` with `numberingSystem: "deva"` when the
-  user enables native numerals (Settings toggle, default on for hi/ta).
+  user enables native numerals (Settings toggle; default on for hi, off for ta and en — Tamil digits
+  ௦–௯ are not in contemporary use in Tamil Nadu, so Tamil UI shows Latin digits unless opted in).
 - Voice: `voice/play(key)` looks for `/audio/{locale}/{key}.mp3`; if missing, falls back to
   `speechSynthesis` and shows a small "TTS fallback" label. A manifest of expected keys is in
   `public/audio/manifest.json`. Keys: `welcome`, `batch_logged`, `alert_75`, `alert_50`, `alert_25`,

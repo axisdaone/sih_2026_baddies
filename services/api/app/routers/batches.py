@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 
-from app.deps import CurrentFarmer, DbDep
+from app.deps import CurrentFarmer, DbDep, farmer_rate_limited, require_demo_mode
 from app.schemas import BatchCreate, BatchOut, BatchPatch, ShelfLifeEstimate
 from app.services.batches import (
     build_batch_out,
@@ -18,9 +18,12 @@ from app.services.batches import (
 )
 from app.services.batches import list_batches as _list_batches
 from app.services.batches import patch_batch as _patch_batch
+from app.services.simulate import hours_since_harvest
 from app.services.simulate import simulate_batch as _simulate_batch
 
-router = APIRouter(prefix="/batches", tags=["batches"])
+router = APIRouter(
+    prefix="/batches", tags=["batches"], dependencies=[Depends(farmer_rate_limited("farmer"))]
+)
 
 # Profile ids are validated against data/demo_scenarios/*.json at request time (404 if unknown).
 SimProfile = Annotated[str, Query(min_length=1, max_length=64, pattern=r"^[a-z0-9_]+$")]
@@ -62,19 +65,36 @@ def get_shelf_life(batch_id: str, farmer: CurrentFarmer, db: DbDep) -> ShelfLife
     return shelf_life_for(batch, readings_for(db, batch.id))
 
 
-@router.post("/{batch_id}/simulate", response_model=BatchOut)
+@router.post(
+    "/{batch_id}/simulate", response_model=BatchOut, dependencies=[Depends(require_demo_mode)]
+)
 def simulate_batch(
     batch_id: str,
     farmer: CurrentFarmer,
     db: DbDep,
     profile: SimProfile = "hot_afternoon",
     up_to_hours: Annotated[float | None, Query(ge=0)] = None,
+    all_readings: Annotated[bool, Query(alias="all")] = False,
 ) -> BatchOut:
-    """Demo: append `source: "sim"` readings from data/demo_scenarios/{profile}.json.
+    """Demo (DEMO_MODE only, 403 otherwise): append `source: "sim"` readings from
+    data/demo_scenarios/{profile}.json.
 
     Deterministic reading ids make replays idempotent; `up_to_hours` limits the profile to
     readings with `offset_hours <= up_to_hours` (the telemetry player's "current hour").
+
+    * omitted -> defaults to the hours elapsed since `harvested_at`, so a batch harvested 2 h
+      ago gets only the profile's first 2 h and never a reading dated in the future (the
+      kinetics engine would drop those, but they would already sit in the hash chain);
+    * `?all=true` -> the whole profile regardless of the clock (`up_to_hours` is ignored),
+      e.g. to build the full 7-reading reefer_van chain for the Quality Pass / tamper demo.
     """
     batch = get_batch_for_farmer(db, farmer, batch_id)
-    _simulate_batch(db, batch, profile, up_to_hours)
+    limit: float | None
+    if all_readings:
+        limit = None
+    elif up_to_hours is None:
+        limit = hours_since_harvest(batch)
+    else:
+        limit = up_to_hours
+    _simulate_batch(db, batch, profile, limit)
     return build_batch_out(db, batch)

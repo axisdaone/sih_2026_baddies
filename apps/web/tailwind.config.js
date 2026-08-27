@@ -16,10 +16,12 @@ export default {
           800: '#166534',
           900: '#14532d',
         },
-        // Shelf-life status colours (fresh / warning / critical / spoiled).
-        fresh: '#16a34a',
+        // Shelf-life status colours (fresh / warning / critical / spoiled). fresh/critical are the
+        // 700 shades so white chip text and coloured text on white both clear WCAG AA (≥ 4.5:1);
+        // warning stays amber-500 for fills (with dark text) — use text-amber-700 for amber text.
+        fresh: '#15803d',
         warning: '#f59e0b',
-        critical: '#ea580c',
+        critical: '#c2410c',
         spoiled: '#b91c1c',
       },
       fontFamily: {

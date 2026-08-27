@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { BatchCard } from '../components/BatchCard';
+import { LossComparisonCard } from '../components/LossComparisonCard';
 import { useBatches } from '../hooks/useBatch';
 import { useShelfLifeMap } from '../hooks/useShelfLife';
 
@@ -61,6 +62,10 @@ export default function Home(): JSX.Element {
           + {t('batch:home.log_harvest')}
         </Link>
       )}
+
+      {/* Demo only (renders nothing unless Settings → load demo stored the seed's loss_comparison). */}
+      <LossComparisonCard className="mt-4" />
+
 
       {closed.length > 0 && (
         <details className="mt-6">

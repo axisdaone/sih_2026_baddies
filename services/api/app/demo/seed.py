@@ -9,12 +9,19 @@ Semantics (see data/demo_scenarios/README.md section 2):
 * `client_seq` = 1-based batch index for batches, 1-based position for readings;
 * ids are fixed in the file, so replays are no-ops (existing batches keep their original
   `harvested_at`, so their reading timestamps stay consistent). `reset=True` deletes the demo
-  farmer's data first and re-anchors everything to `now` — for a pitch days after the first seed.
+  farmer's data first and re-anchors everything to `now` — for a pitch days after the first seed
+  (chain heads change, so printed QR codes must be regenerated);
+* the fixed ids are public (the seed file is in the repo), so a stranger could pre-register one
+  under their own farmer and make every later seed 409. When that happens the batch / reading
+  falls back to `uuid5(demo_farmer.id, fixed_id)`: derived from the demo farmer's row id (stable
+  for the life of the DB, unlike JWT_SECRET) so replays are still no-ops, and unguessable
+  because the farmer id never leaves the private API.
 """
 
 from __future__ import annotations
 
 import json
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -23,14 +30,15 @@ from typing import Any
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.config import get_settings
+from app.config import DEMO_DEVICE_ID, get_settings
 from app.enums import Crop, ReadingSource
 from app.models import Batch, Farmer, PassEvent, Reading, Recommendation, SyncOp, utcnow
 from app.schemas import BatchCreate, ReadingCreate
+from app.services import ConflictError
 from app.services.batches import upsert_batch
 from app.services.readings import append_reading
 
-DEMO_DEVICE_ID = "demo-device-001"
+__all__ = ["DEMO_DEVICE_ID", "SeedResult", "derived_id", "seed_demo"]
 
 
 @dataclass(slots=True)
@@ -45,6 +53,11 @@ class SeedResult:
 
 def seed_path() -> Path:
     return get_settings().DATA_DIR / "demo_scenarios" / "demo_seed.json"
+
+
+def derived_id(farmer: Farmer, fixed_id: str) -> str:
+    """Fallback id when `fixed_id` is already taken by another tenant (see module docstring)."""
+    return str(uuid.uuid5(uuid.UUID(farmer.id), fixed_id))
 
 
 def load_seed(path: Path | None = None) -> dict[str, Any]:
@@ -83,7 +96,11 @@ def seed_demo(
             client_seq=index,
             client_created_at=harvested_at,
         )
-        batch, created = upsert_batch(db, farmer, body)
+        try:
+            batch, created = upsert_batch(db, farmer, body)
+        except ConflictError:  # fixed id squatted by another farmer: derive a private one
+            body = body.model_copy(update={"id": derived_id(farmer, body.id)})
+            batch, created = upsert_batch(db, farmer, body)
         result.batch_ids.append(batch.id)
         if created:
             result.batches_created += 1
@@ -94,9 +111,15 @@ def seed_demo(
 
 
 def ensure_demo_farmer(db: Session, spec: dict[str, Any]) -> Farmer:
-    """Find-or-create by device_id; an existing farmer is left untouched."""
+    """Find-or-create by device_id. An existing farmer keeps its data; only a *missing*
+    display name is filled from the spec (a bare `POST /auth/device` with the demo id before
+    the first seed would otherwise leave the demo farmer nameless on every Quality Pass)."""
     device_id = str(spec.get("device_id", DEMO_DEVICE_ID))
     farmer = db.scalar(select(Farmer).where(Farmer.device_id == device_id))
+    if farmer is not None and farmer.display_name is None and spec.get("display_name"):
+        farmer.display_name = str(spec["display_name"])
+        db.commit()
+        db.refresh(farmer)
     if farmer is None:
         farmer = Farmer(
             device_id=device_id,
@@ -139,6 +162,11 @@ def _seed_readings(
             geohash=batch.origin_geohash,
             client_seq=position,
         )
-        _, was_created = append_reading(db, batch, body)
+        try:
+            _, was_created = append_reading(db, batch, body)
+        except ConflictError:  # fixed id squatted on another batch: derive a private one
+            # Derived from the (possibly remapped) batch id so replays stay no-ops.
+            fallback = derived_id(batch.farmer, f"{batch.id}:{body.id}")
+            _, was_created = append_reading(db, batch, body.model_copy(update={"id": fallback}))
         created += int(was_created)
     return created

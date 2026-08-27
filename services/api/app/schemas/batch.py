@@ -3,7 +3,7 @@ from __future__ import annotations
 from pydantic import Field
 
 from app.enums import BatchStatus, Crop
-from app.schemas.common import ApiModel, UtcDatetime, UuidStr
+from app.schemas.common import MAX_CLIENT_SEQ, ApiModel, UtcDatetime, UuidStr
 from app.schemas.reading import ReadingOut
 from app.schemas.shelf_life import ShelfLifeEstimate
 
@@ -19,7 +19,7 @@ class BatchCreate(ApiModel):
     origin_lat: float | None = Field(default=None, ge=-90, le=90)
     origin_lon: float | None = Field(default=None, ge=-180, le=180)
     notes: str | None = Field(default=None, max_length=2000)
-    client_seq: int = Field(ge=0)
+    client_seq: int = Field(ge=0, le=MAX_CLIENT_SEQ)
     client_created_at: UtcDatetime
 
 
@@ -29,7 +29,7 @@ class BatchPatch(ApiModel):
     status: BatchStatus | None = None
     notes: str | None = Field(default=None, max_length=2000)
     qty_kg: float | None = Field(default=None, gt=0)
-    client_seq: int = Field(ge=0)
+    client_seq: int = Field(ge=0, le=MAX_CLIENT_SEQ)
 
 
 class BatchOut(BatchCreate):

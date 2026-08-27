@@ -64,6 +64,14 @@ export interface RequestOptions {
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'DELETE';
 
+/** True for our API: a relative URL, one under API_BASE, or one on this page's origin. */
+export function isOwnApiUrl(url: string): boolean {
+  if (!/^https?:\/\//i.test(url)) return true;
+  if (/^https?:\/\//i.test(API_BASE) && url.startsWith(`${API_BASE}/`)) return true;
+  const origin = typeof location !== 'undefined' ? location.origin : '';
+  return !!origin && origin !== 'null' && url.startsWith(`${origin}/`);
+}
+
 async function request<T>(method: Method, path: string, body?: unknown, opts: RequestOptions = {}): Promise<T> {
   const url = path.startsWith('http') ? path : `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`;
   const controller = new AbortController();
@@ -78,7 +86,9 @@ async function request<T>(method: Method, path: string, body?: unknown, opts: Re
 
   const headers: Record<string, string> = { Accept: 'application/json', ...opts.headers };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
-  const token = opts.anonymous ? null : getToken();
+  // The bearer token only ever goes to our own API: relative paths, or absolute URLs under API_BASE /
+  // this origin. Any other absolute URL (e.g. a server-supplied pass_url) is treated as anonymous.
+  const token = opts.anonymous || !isOwnApiUrl(url) ? null : getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let response: Response;

@@ -194,6 +194,14 @@ def test_pharma_freeze_breach() -> None:
     assert estimate.breach.value_c == 0.0
     assert estimate.breach.reading_id == "r2"
     assert estimate.breach.at == T0 + timedelta(hours=1)
+    assert estimate.breach.label == "freeze"
+    assert set(estimate.breach.model_dump(mode="json")) == {
+        "type",
+        "value_c",
+        "reading_id",
+        "at",
+        "label",
+    }
     assert estimate.remaining_hours.model_dump() == {"low": 0.0, "mid": 0.0, "high": 0.0}
     assert estimate.consumed_fraction == 1.0
     assert estimate.alerts_crossed == list(ALERT_THRESHOLDS_PCT)
@@ -223,6 +231,7 @@ def test_breach_reports_first_breaching_reading() -> None:
     assert estimate.breach is not None
     assert estimate.breach.reading_id == "b"
     assert estimate.breach.value_c == 45.0
+    assert estimate.breach.label == "heat_damage"
     # Thermal load and segments are still reported for the "why" screen.
     assert estimate.thermal_load_degree_hours == pytest.approx(20 + 36 + 37)
     assert len(estimate.segments) == 3
@@ -445,3 +454,39 @@ def test_consumed_after_pharma_uses_budget() -> None:
     estimate = evaluate(pharma, T0, [_reading(5.0, 0)], T0 + timedelta(hours=1))
     assert consumed_after(pharma, estimate, 3, 5.0) == 0.0
     assert consumed_after(pharma, estimate, 3, 12.0) == pytest.approx(0.25)
+
+
+def test_remaining_hours_at_reprojects_at_another_temperature() -> None:
+    """Routing feasibility: remaining hours at the transit temperature, from the same consumed
+    fraction, with the low/high scenarios available and the excursion `r == 0` branch intact."""
+    from app.kinetics import evaluate_detailed, remaining_hours_at
+
+    tomato = _proto("tomato")
+    detailed = evaluate_detailed(
+        tomato, T0, [_reading(30.0, 0), _reading(12.0, 3)], T0 + timedelta(hours=6)
+    )
+    estimate = detailed.estimate
+    assert detailed.estimate == evaluate(
+        tomato, T0, [_reading(30.0, 0), _reading(12.0, 3)], T0 + timedelta(hours=6)
+    )
+    assert round_half_up(detailed.consumed_mid, 4) == estimate.consumed_fraction
+    # At the last reading's temperature the helper reproduces the wire figure (1 dp).
+    assert round_half_up(remaining_hours_at(tomato, estimate, 12.0), 1) == pytest.approx(
+        estimate.remaining_hours.mid, abs=0.1
+    )
+    at_30 = remaining_hours_at(tomato, estimate, 30.0)
+    assert at_30 == pytest.approx((1 - estimate.consumed_fraction) * 288 / 4.0, rel=1e-6)
+    assert at_30 < remaining_hours_at(tomato, estimate, 12.0)
+    low = remaining_hours_at(tomato, estimate, 30.0, scenario="low")
+    high = remaining_hours_at(tomato, estimate, 30.0, scenario="high")
+    assert low < at_30 < high
+    # The unrounded start continues the integral exactly; the rounded one is within 5e-5.
+    exact = remaining_hours_at(tomato, estimate, 30.0, consumed_now=detailed.consumed_mid)
+    assert exact == pytest.approx(at_30, abs=288 / 4.0 * 5e-5)
+
+    pharma = _proto("pharma_2_8")
+    in_band = evaluate(pharma, T0, [_reading(15.0, 0), _reading(5.0, 6)], T0 + timedelta(hours=12))
+    assert remaining_hours_at(pharma, in_band, 5.0) == pytest.approx(6.0)  # budget remaining
+    assert remaining_hours_at(pharma, in_band, 30.0) == pytest.approx(6.0)  # r = 1 -> 6 h
+    with pytest.raises(KeyError):
+        remaining_hours_at(tomato, estimate, 30.0, scenario="worst")

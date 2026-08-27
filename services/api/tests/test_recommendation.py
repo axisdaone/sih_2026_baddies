@@ -168,7 +168,7 @@ def test_hero_batch_recommendation_endpoint(
     assert body["shelf_life"]["protocol_id"] == "tomato"
     assert body["top"]["mandi_id"] == "hosur"
     assert body["top"]["price_source"] in {"bundled_snapshot", "agmarknet_live", "agmarknet_cache"}
-    assert body["top"]["expected_value_inr"] == pytest.approx(6638, rel=0.03)
+    assert body["top"]["expected_value_inr"] == pytest.approx(6608, rel=0.03)
     assert body["nearest"]["mandi_id"] == "palacode"
     assert body["uplift_vs_nearest_pct"] >= 20
     assert [a["mandi_id"] for a in body["alternatives"]] == ["bengaluru", "kolar"]
@@ -184,13 +184,15 @@ def test_hero_batch_recommendation_endpoint(
     assert rows[0].ranked_json["top"]["mandi_id"] == "hosur"
     assert rows[0].ranked_json["batch_id"] == batch_id
 
-    # Each call recomputes and stores a fresh row.
+    # Each call recomputes and upserts the batch's single row (polling cannot fill the disk).
     url = f"/api/v1/batches/{batch_id}/recommendation"
+    first_computed_at = rows[0].computed_at
     assert client.get(url, headers=auth_headers).status_code == 200
     stmt = select(RecommendationRow).where(RecommendationRow.batch_id == batch_id)
     with SessionLocal() as db:
-        count = len(db.scalars(stmt).all())
-    assert count == 2
+        rows = db.scalars(stmt).all()
+    assert len(rows) == 1
+    assert rows[0].computed_at >= first_computed_at
 
 
 def test_batch_without_origin_uses_demo_origin(
@@ -238,7 +240,8 @@ def test_unknown_batch_404(client: TestClient, auth_headers: dict[str, str]) -> 
 
 def test_other_farmers_batch_404(client: TestClient, auth_headers: dict[str, str]) -> None:
     other = client.post(
-        "/api/v1/auth/device", json={"device_id": "test-device-other", "display_name": "Other"}
+        "/api/v1/auth/device",
+        json={"device_id": "0f3c1a2b-5d6e-4f70-8a9b-0c1d2e3f4a07", "display_name": "Other"},
     )
     assert other.status_code == 200
     other_headers = {"Authorization": f"Bearer {other.json()['token']}"}

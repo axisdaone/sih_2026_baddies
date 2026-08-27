@@ -9,7 +9,7 @@
     "title": "Voice",
     "test": "Test voice",
     "mute": "Mute voice prompts",
-    "clips": "{{ready}} of {{total}} clips recorded for {{lang}}",
+    "clips": "{{ready, num}} of {{total, num}} clips recorded for {{lang}}",
     "clips_ready": "Pre-recorded clips",
     "tts": "Using computer voice (TTS fallback)",
     "unavailable": "No voice available on this device",
@@ -22,7 +22,7 @@
     "load": "Use demo identity & load demo data",
     "loading": "Loading demo…",
     "loaded": "Demo data loaded",
-    "loaded_body": "Signed in as {{name}} · {{count}} batches (SIMULATED)",
+    "loaded_body": "Signed in as {{name}} · {{count, num}} batches (SIMULATED)",
     "failed": "Could not load demo data",
     "failed_body": "Is the server reachable? Demo mode must be enabled on the API.",
     "reset": "Reset local data",
@@ -33,6 +33,21 @@
     "reload": "Reload app",
     "demo_origin": "Use demo origin when GPS is unavailable",
     "demo_origin_desc": "{{label}} ({{lat}}, {{lon}})"
+  },
+  "name": {
+    "title": "Your name on the Quality Pass",
+    "hint": "Optional. Traders who scan a pass see this name; leave it off to stay anonymous. You can change or remove it any time.",
+    "share": "Show my name on the Quality Pass",
+    "label": "Display name",
+    "placeholder": "e.g. Muthu",
+    "save": "Save name",
+    "saved": "Name saved"
+  },
+  "sync": {
+    "failed_title": "Changes the server rejected",
+    "failed_desc": "These changes were refused several times and are no longer retried. Discard them to clear the list.",
+    "attempts": "{{count, num}} attempts",
+    "discard": "Discard"
   },
   "device": {
     "title": "Device",

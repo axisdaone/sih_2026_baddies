@@ -59,8 +59,16 @@ export function CountdownRange({ estimate, source = 'local', className = '' }: C
         <dd className="tabular font-semibold">{f.percent(estimate.remaining_fraction)}</dd>
         <dt className="text-gray-500">{t('countdown.confidence')}</dt>
         <dd className="font-semibold">{t(`confidence.${estimate.confidence}`)}</dd>
-        <dt className="text-gray-500">{t('countdown.expected_end')}</dt>
-        <dd className="font-semibold">{f.dateTime(estimate.expected_end.mid)}</dd>
+        {/* The hours are a range, so the end time is too: mid is "most likely", low–high is the spread. */}
+        <dt className="text-gray-500">
+          {t('countdown.expected_end')} <span className="text-xs">({t('countdown.most_likely').toLowerCase()})</span>
+        </dt>
+        <dd className="font-semibold" data-testid="expected-end">
+          {f.dateTime(estimate.expected_end.mid)}
+          <span className="tabular block text-xs font-normal text-gray-500">
+            {f.dateTime(estimate.expected_end.low)} – {f.dateTime(estimate.expected_end.high)}
+          </span>
+        </dd>
         <dt className="text-gray-500">{t('countdown.current_temp')}</dt>
         <dd className="tabular font-semibold">
           {f.number(estimate.current_temp_c)} °C
@@ -79,7 +87,9 @@ export function CountdownRange({ estimate, source = 'local', className = '' }: C
         </p>
       )}
       {source === 'server' && <p className="mt-2 text-xs text-gray-500">{t('countdown.from_server')}</p>}
-      <p className="sr-only">{t('countdown.remaining_pct')}: {remainingPct}%</p>
+      <p className="sr-only">
+        {t('countdown.remaining_pct')}: {f.percent(remainingPct / 100)}
+      </p>
     </section>
   );
 }

@@ -2,8 +2,9 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath, URL } from 'node:url';
+import { RUNTIME_CACHING } from './src/pwa/runtimeCaching';
 
-const DAY = 24 * 60 * 60;
+// Runtime caching lives in src/pwa/runtimeCaching.ts so src/pwa.test.ts can pin it without esbuild.
 
 export default defineConfig({
   plugins: [
@@ -43,49 +44,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
-        runtimeCaching: [
-          {
-            // Reference data + prices: prefer fresh, fall back to last-known-good.
-            urlPattern: /\/api\/v1\/(protocols|mandis|prices)(\/|\?|$)/,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              networkTimeoutSeconds: 8,
-              expiration: { maxEntries: 64, maxAgeSeconds: 7 * DAY },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            // Public Quality Pass payloads (a trader opens a QR link on a flaky network).
-            urlPattern: /\/api\/v1\/quality-pass\//,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'quality-pass-cache',
-              networkTimeoutSeconds: 8,
-              expiration: { maxEntries: 100, maxAgeSeconds: 30 * DAY },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            // OSM raster tiles for the FPO map. 500 tiles covers a district at a few zoom levels.
-            urlPattern: /^https:\/\/([a-c]\.)?tile\.openstreetmap\.org\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'osm-tiles',
-              expiration: { maxEntries: 500, maxAgeSeconds: 30 * DAY, purgeOnQuotaError: true },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          {
-            // Contract §7: Workbox Background Sync retries the outbox POST itself if the tab dies mid-flight.
-            urlPattern: /\/api\/v1\/sync$/,
-            method: 'POST',
-            handler: 'NetworkOnly',
-            options: {
-              backgroundSync: { name: 'farmsignal-sync', options: { maxRetentionTime: 24 * 60 } },
-            },
-          },
-        ],
+        runtimeCaching: RUNTIME_CACHING,
       },
       // Lets `npm run dev` demo the service worker (dev-dist/ is gitignored).
       devOptions: { enabled: true, type: 'module', navigateFallback: 'index.html' },
@@ -106,11 +65,15 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        // Contract §9: Leaflet and QR only load with their pages. Keep them in named chunks.
+        // Contract §9: Leaflet and QR only load with their pages (Fpo / QualityPass). Everything else
+        // from node_modules (react, react-dom, react-router, dexie, i18next, workbox-window…) plus
+        // Rollup's commonjs helpers go to one 'vendor' chunk, so the leaflet/qrcode chunks depend on
+        // vendor and never the other way round — the entry chunk must not statically import Leaflet.
         manualChunks(id) {
           const p = id.replace(/\\/g, '/');
           if (/\/node_modules\/(leaflet|react-leaflet|@react-leaflet)\//.test(p)) return 'leaflet';
           if (/\/node_modules\/(qrcode|dijkstrajs|encode-utf8|pngjs)\//.test(p)) return 'qrcode';
+          if (p.includes('/node_modules/') || p.includes('commonjsHelpers')) return 'vendor';
           return undefined;
         },
       },

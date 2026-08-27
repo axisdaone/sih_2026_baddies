@@ -7,7 +7,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { PROTOCOLS } from '../data';
 import type { DecayProtocol, ReadingInput, ShelfLifeEstimate } from '../types';
-import { clamp, consumedAfter, evaluate, MODEL_VERSION, rateMultiplier } from './index';
+import { clamp, consumedAfter, evaluate, isoZ, MODEL_VERSION, rateMultiplier, roundHalfUp } from './index';
 
 // vite-node injects __dirname for test modules; src/engine -> repo root is four levels up.
 const REPO_ROOT = resolve(__dirname, '..', '..', '..', '..');
@@ -144,7 +144,8 @@ describe('literature anchors (contract §2.3, mid scenario)', () => {
   it('pharma: any reading below 0 C -> spoiled (freeze)', () => {
     const e = evaluate(PHARMA, T0, [reading(1, 5, 0), reading(2, -0.5, 1), reading(3, 5, 2)], at(3));
     expect(e.status).toBe('spoiled');
-    expect(e.breach).toMatchObject({ type: 'min_temp', value_c: -0.5, reading_id: reading(2, 0, 0).id, at: at(1), label: 'freeze' });
+    // value_c is the threshold that was crossed (0 C), not the reading's -0.5 C — same as the Python engine.
+    expect(e.breach).toStrictEqual({ type: 'min_temp', value_c: 0, reading_id: reading(2, 0, 0).id, at: at(1), label: 'freeze' });
     expect(e.remaining_hours).toEqual({ low: 0, mid: 0, high: 0 });
     expect(e.consumed_fraction).toBe(1);
     expect(e.expected_end).toEqual({ low: at(3), mid: at(3), high: at(3) });
@@ -174,7 +175,7 @@ describe('heat spike acceleration', () => {
   it('above 45 C the hard threshold spoils the batch regardless of duration', () => {
     const e = evaluate(TOMATO, T0, [reading(1, 30, 0), reading(2, 45.1, 3), reading(3, 30, 3.1)], at(8));
     expect(e.status).toBe('spoiled');
-    expect(e.breach).toEqual({ type: 'max_temp', value_c: 45.1, reading_id: reading(2, 0, 0).id, at: at(3), label: 'heat_damage' });
+    expect(e.breach).toStrictEqual({ type: 'max_temp', value_c: 45, reading_id: reading(2, 0, 0).id, at: at(3), label: 'heat_damage' });
     expect(e.remaining_fraction).toBe(0);
     expect(e.alerts_crossed).toEqual([75, 50, 25]);
   });
@@ -289,11 +290,31 @@ describe('timeline construction', () => {
     expect(evaluate(TOMATO, T0, [reading(1, 30, 0)], at(8.01)).confidence).toBe('low');
   });
 
-  it('now before harvested_at yields an empty (zero-hour) timeline rather than negative hours', () => {
+  it('now before harvested_at yields an empty timeline (no zero-length segments) rather than negative hours', () => {
     const e = evaluate(TOMATO, at(2), [], T0);
     expect(e.consumed_fraction).toBe(0);
-    expect(e.segments).toEqual([{ from: at(2), to: at(2), temp_c: 30, hours: 0, rate: 4, assumed: true }]);
+    expect(e.segments).toEqual([]);
+    expect(e.current_temp_c).toBe(30);
+    expect(e.current_temp_assumed).toBe(true);
+    expect(e.hours_since_last_reading).toBeNull();
     expect(e.remaining_hours.mid).toBe(72);
+  });
+
+  it('now == harvested_at with no readings: no segments, ambient assumed', () => {
+    const e = evaluate(TOMATO, T0, [], T0);
+    expect(e.segments).toEqual([]);
+    expect(e.consumed_fraction).toBe(0);
+    expect(e.remaining_hours.mid).toBe(72);
+    expect(e.expected_end.mid).toBe(at(72));
+  });
+
+  it('zero-duration segments are never emitted; a reading exactly at now still defines T_now', () => {
+    const e = evaluate(TOMATO, T0, [reading(1, 20, 0), reading(2, 30, 2)], at(2));
+    expect(e.segments.map((s) => [s.temp_c, s.hours])).toEqual([[20, 2]]);
+    expect(e.current_temp_c).toBe(30);
+    expect(e.current_temp_assumed).toBe(false);
+    expect(e.hours_since_last_reading).toBe(0);
+    expect(e.confidence).toBe('high');
   });
 
   it('a whole shelf life at 30 C clamps consumed to 1 -> spoiled with no breach', () => {
@@ -329,27 +350,57 @@ describe('purity and output format', () => {
     expect(unsorted.map((r) => r.id)).toEqual(['b', 'c', 'a']);
   });
 
-  it('computed_at is derived from `now` (not the wall clock) and all timestamps are seconds-precision Z', () => {
-    const e = evaluate(TOMATO, '2026-08-27T06:00:00.999+05:30', unsorted, '2026-08-27T05:30:00.123Z');
-    expect(e.computed_at).toBe('2026-08-27T05:30:00Z');
+  it('computed_at is derived from `now` (not the wall clock); timestamps are UTC Z, whole seconds when possible', () => {
+    const e = evaluate(TOMATO, T0, unsorted, at(5));
+    expect(e.computed_at).toBe(at(5));
+    const ISO_Z = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
     for (const s of e.segments) {
-      expect(s.from).toMatch(ISO_SECONDS);
-      expect(s.to).toMatch(ISO_SECONDS);
+      expect(s.from).toMatch(ISO_Z);
+      expect(s.to).toMatch(ISO_Z);
     }
     expect(e.segments[0].from).toBe('2026-08-27T00:30:00Z');
     expect(e.segments.map((s) => s.temp_c)).toEqual([30, 35]);
+    expect(e.segments[1].from).toBe('2026-08-27T02:30:00.250Z'); // ms kept only where non-zero (Python iso_z)
+    expect(e.segments[1].to).toBe(at(5));
     for (const k of ['low', 'mid', 'high'] as const) expect(e.expected_end[k]).toMatch(ISO_SECONDS);
   });
 
-  it('expected_end = now + remaining_hours, ordered low <= mid <= high', () => {
+  it('sub-second inputs keep their milliseconds exactly like Python iso_z (never truncated)', () => {
+    // harvested_at 06:00:00.999+05:30 == 00:30:00.999Z; reading "a" (00:30:00Z) is clamped to it.
+    const e = evaluate(TOMATO, '2026-08-27T06:00:00.999+05:30', unsorted, '2026-08-27T05:30:00.123Z');
+    expect(e.computed_at).toBe('2026-08-27T05:30:00.123Z');
+    expect(e.segments.map((s) => [s.from, s.to, s.temp_c])).toEqual([
+      ['2026-08-27T00:30:00.999Z', '2026-08-27T02:30:00.250Z', 30],
+      ['2026-08-27T02:30:00.250Z', '2026-08-27T05:30:00.123Z', 35],
+    ]);
+    // expected_end = now + whole-ms rounded hours, so it carries now's .123 fraction.
+    for (const k of ['low', 'mid', 'high'] as const) expect(e.expected_end[k]).toMatch(/\.123Z$/);
+    expect(isoZ(Date.parse('2026-01-02T03:04:05Z'))).toBe('2026-01-02T03:04:05Z');
+    expect(isoZ(Date.parse('2026-01-02T03:04:05.250Z'))).toBe('2026-01-02T03:04:05.250Z');
+  });
+
+  it('expected_end = now + the *rounded* remaining_hours as whole milliseconds, ordered low <= mid <= high', () => {
     const e = evaluate(TOMATO, T0, [reading(1, 28, 0)], at(4));
     for (const k of ['low', 'mid', 'high'] as const) {
-      const expectedMs = Date.parse(at(4)) + e.remaining_hours[k] * 3.6e6;
-      // remaining_hours is rounded to 0.1 h (=360 s); expected_end uses the unrounded value.
-      expect(Math.abs(Date.parse(e.expected_end[k]) - expectedMs)).toBeLessThanOrEqual(0.05 * 3.6e6 + 1000);
+      // Python: now + timedelta(milliseconds=round_half_up(rounded_hours * 3.6e6, 0)).
+      const expectedMs = Date.parse(at(4)) + Math.floor(e.remaining_hours[k] * 3.6e6 + 0.5);
+      expect(Date.parse(e.expected_end[k])).toBe(expectedMs);
+      expect(e.expected_end[k]).toMatch(ISO_SECONDS); // 0.1 h = 360 s, so always whole seconds here
     }
     expect(Date.parse(e.expected_end.low)).toBeLessThanOrEqual(Date.parse(e.expected_end.mid));
     expect(Date.parse(e.expected_end.mid)).toBeLessThanOrEqual(Date.parse(e.expected_end.high));
+  });
+
+  it('roundHalfUp is floor(x * 10^n + 0.5) / 10^n, bit-for-bit the Python round_half_up', () => {
+    expect(roundHalfUp(2.5, 0)).toBe(3);
+    expect(roundHalfUp(-2.5, 0)).toBe(-2);
+    expect(roundHalfUp(1.25, 1)).toBe(1.3);
+    expect(roundHalfUp(0.08333, 4)).toBe(0.0833);
+    expect(roundHalfUp(66.04, 1)).toBe(66);
+    expect(Object.is(roundHalfUp(-0.04, 1), 0)).toBe(true); // never -0
+    // The one input class where Math.round and the shared rule disagree: 0.5 - 2^-54 + 0.5 rounds to 1.
+    expect(roundHalfUp(0.49999999999999994, 0)).toBe(1);
+    expect(Math.round(0.49999999999999994)).toBe(0);
   });
 
   it('rounds only at the boundary: fractions 4 dp, hours 1 dp, degree-hours 1 dp', () => {

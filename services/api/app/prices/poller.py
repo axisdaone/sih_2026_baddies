@@ -15,7 +15,7 @@ from fastapi import FastAPI
 from app.config import get_settings
 from app.db import SessionLocal
 from app.prices.client import live_fetch_enabled
-from app.prices.service import RefreshResult, refresh_prices
+from app.prices.service import RefreshResult, refresh_gate, refresh_prices
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +26,8 @@ def run_poll() -> RefreshResult | None:
     """One poll cycle with its own DB session. Returns the result (None if it blew up)."""
     live = live_fetch_enabled()
     try:
-        with SessionLocal() as db:
+        # Same gate as the manual endpoint: a poll and a manual refresh never overlap.
+        with refresh_gate, SessionLocal() as db:
             result = refresh_prices(db, live=live)
     except Exception:  # noqa: BLE001 - scheduler jobs must never raise
         log.exception("price poll crashed")

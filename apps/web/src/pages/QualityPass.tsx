@@ -1,8 +1,13 @@
 /**
  * Public Quality Pass (/pass/:id, PublicLayout — no bottom nav). Loads GET /quality-pass/:id
  * anonymously; when that fails (offline / not yet synced) it falls back to the local Dexie copy and
- * recomputes the estimate + chain head on-device, labelled "Offline copy". Verification prefers the
- * server (?head= from the QR), else verifies the local chain, else shows UNVERIFIED.
+ * recomputes the estimate + chain head on-device, labelled "Offline copy".
+ *
+ * Verification prefers the server: GET /quality-pass/:id/verify?head=<?h= from the QR>. `valid=false`
+ * is TAMPERED (first_bad_seq) regardless of heads; `valid=true` + `head_matches=false` with a QR head
+ * is TAMPERED (head mismatch); without a QR head the server cannot compare, so the badge reads
+ * VERIFIED (chain consistent) with a "QR head not checked" note. Offline it verifies the local chain
+ * (server-hashed rows only), else shows UNVERIFIED.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
@@ -21,17 +26,7 @@ import { ThermalTimeline, type TimelineReading } from '@/components/pass/Thermal
 import { VerifyBadge, type VerifyState } from '@/components/pass/VerifyBadge';
 import { PassQr } from '@/components/pass/PassQr';
 import { allSynced, localChainHead, localVerify, orderReadings, shortHead } from '@/components/pass/chain';
-import type { BatchStatus, ChainVerifyResponse, Crop, QualityPassPayload, ReadingSource, ShelfLifeEstimate } from '@/types';
-
-/** Server payload as the backend router emits it (superset of types.QualityPassPayload). */
-type PassPayloadWire = Omit<QualityPassPayload, 'readings' | 'shelf_life'> & {
-  protocol_name?: string;
-  chain_length?: number;
-  /** Coarse label only ("Dharmapuri belt"); the server never exposes the exact origin. */
-  region?: string | null;
-  readings: Array<{ seq: number; temp_c: number; taken_at: string; source: ReadingSource; hash?: string }>;
-  shelf_life?: ShelfLifeEstimate | null;
-};
+import type { BatchStatus, ChainVerifyResponse, Crop, QualityPassPayload, ShelfLifeEstimate } from '@/types';
 
 export interface PassView {
   batch_id: string;
@@ -46,6 +41,14 @@ export interface PassView {
   readings: TimelineReading[];
   shelf_life: ShelfLifeEstimate | null;
   chain_head: string | null;
+  /** Server: QualityPassPayload.chain_length; local: number of rows. */
+  chain_length: number;
+  /** Server: recomputed on every request; local copies assume true until verified. */
+  chain_valid: boolean;
+  /** Server payload timestamp (null for offline copies). */
+  generated_at: string | null;
+  /** Canonical public link from the server ({PUBLIC_BASE_URL}/pass/:id?h=…); null offline. */
+  pass_url: string | null;
   simulated: boolean;
   source: 'server' | 'local';
   /** Local rows (when this device has them) for offline verification. */
@@ -61,11 +64,12 @@ async function localRowsFor(id: string): Promise<ReadingRow[]> {
 }
 
 async function loadFromServer(id: string): Promise<PassView> {
-  const p = await api.get<PassPayloadWire>(`/quality-pass/${id}`, { anonymous: true });
-  const readings = (p.readings ?? []).map((r) => ({ seq: r.seq, temp_c: r.temp_c, taken_at: r.taken_at, source: r.source, hash: r.hash }));
+  const p = await api.get<QualityPassPayload>(`/quality-pass/${id}`, { anonymous: true });
+  // readings[].hash is the server's 12-hex display prefix, not a full digest.
+  const readings: TimelineReading[] = (p.readings ?? []).map((r) => ({ seq: r.seq, temp_c: r.temp_c, taken_at: r.taken_at, source: r.source, hash: r.hash }));
   return {
     batch_id: p.batch_id,
-    crop: p.crop,
+    crop: p.crop as Crop,
     protocol_id: p.protocol_id,
     protocol_name: p.protocol_name ?? null,
     qty_kg: p.qty_kg,
@@ -76,6 +80,10 @@ async function loadFromServer(id: string): Promise<PassView> {
     readings,
     shelf_life: p.shelf_life ?? null,
     chain_head: p.chain_head ?? null,
+    chain_length: typeof p.chain_length === 'number' ? p.chain_length : readings.length,
+    chain_valid: p.chain_valid !== false,
+    generated_at: p.generated_at ?? null,
+    pass_url: typeof p.pass_url === 'string' && /^https?:\/\//i.test(p.pass_url) ? p.pass_url : null,
     simulated: Boolean(p.simulated) || readings.some((r) => r.source === 'sim'),
     source: 'server',
     localRows: await localRowsFor(id),
@@ -113,6 +121,10 @@ async function loadFromLocal(id: string): Promise<PassView | null> {
     readings: rows.map((r, i) => ({ seq: r.seq ?? i + 1, temp_c: r.temp_c, taken_at: r.taken_at, source: r.source, hash: r.hash })),
     shelf_life: shelf,
     chain_head: head,
+    chain_length: rows.length,
+    chain_valid: true,
+    generated_at: null,
+    pass_url: null,
     simulated: rows.some((r) => r.source === 'sim'),
     source: 'local',
     localRows: rows,
@@ -120,6 +132,8 @@ async function loadFromLocal(id: string): Promise<PassView | null> {
 }
 
 const LOCAL_REFRESH_MS = 60_000;
+/** Batch ids are UUID v4; anything else never reaches the API path (no `..%2F` games). */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default function QualityPass(): JSX.Element {
   const { t } = useTranslation('pass');
@@ -136,7 +150,7 @@ export default function QualityPass(): JSX.Element {
   const [verifying, setVerifying] = useState(false);
 
   const load = useCallback(async () => {
-    if (!id) {
+    if (!id || !UUID_RE.test(id)) {
       setView(null);
       setLoading(false);
       return;
@@ -167,25 +181,43 @@ export default function QualityPass(): JSX.Element {
     return () => clearInterval(timer);
   }, [view?.source, load]);
 
-  const expectedHead = useMemo(() => queryHead ?? shortHead(view?.chain_head), [queryHead, view?.chain_head]);
+  /** Head printed on the QR (?h=, >= 16 hex). Only this can be *checked*; the payload's own head cannot vouch for itself. */
+  const qrHead = useMemo(() => (queryHead && /^[0-9a-f]{16,64}$/i.test(queryHead) ? queryHead.toLowerCase() : null), [queryHead]);
 
   const runVerify = useCallback(async () => {
     if (!view) return;
     setVerifying(true);
     setVerify({ kind: 'checking' });
     try {
-      if (!expectedHead) {
-        setVerify({ kind: 'unverified', reason: 'no_head' });
-        return;
-      }
       if (online) {
         try {
-          const res = await api.get<ChainVerifyResponse>(`/quality-pass/${view.batch_id}/verify?head=${encodeURIComponent(expectedHead)}`, { anonymous: true });
-          setVerify(res.valid ? { kind: 'verified', length: res.length, via: 'server' } : { kind: 'tampered', firstBadSeq: res.first_bad_seq, via: 'server' });
+          const query = qrHead ? `?head=${encodeURIComponent(qrHead)}` : '';
+          const res = await api.get<ChainVerifyResponse>(`/quality-pass/${view.batch_id}/verify${query}`, { anonymous: true });
+          if (!res.valid) {
+            // Broken chain: heads are irrelevant, report where it broke.
+            setVerify({ kind: 'tampered', firstBadSeq: res.first_bad_seq, via: 'server' });
+            return;
+          }
+          if (!qrHead) {
+            if (res.length === 0 && !view.chain_head) {
+              setVerify({ kind: 'unverified', reason: 'no_head' });
+              return;
+            }
+            // No ?h= → the server answers head_matches=false by design; chain is consistent, QR head unchecked.
+            setVerify({ kind: 'verified', length: res.length, via: 'server', headChecked: false });
+            return;
+          }
+          const headMatches = typeof res.head_matches === 'boolean' ? res.head_matches : typeof res.chain_head === 'string' && res.chain_head.startsWith(qrHead);
+          setVerify(headMatches ? { kind: 'verified', length: res.length, via: 'server', headChecked: true } : { kind: 'tampered', firstBadSeq: null, via: 'server' });
           return;
         } catch {
           /* server unreachable — try the local chain */
         }
+      }
+      if (view.source === 'server' && !view.chain_valid) {
+        // The payload itself said the stored chain no longer recomputes (chain_valid is refreshed per request).
+        setVerify({ kind: 'tampered', firstBadSeq: null, via: 'server' });
+        return;
       }
       const rows = view.localRows;
       if (rows.length === 0) {
@@ -197,24 +229,37 @@ export default function QualityPass(): JSX.Element {
         return;
       }
       const res = await localVerify(view.batch_id, rows);
-      const headMatches = typeof res.chain_head === 'string' && res.chain_head.startsWith(expectedHead);
-      setVerify(res.valid && headMatches ? { kind: 'verified', length: res.length, via: 'local' } : { kind: 'tampered', firstBadSeq: res.first_bad_seq, via: 'local' });
+      if (!res.valid) {
+        setVerify({ kind: 'tampered', firstBadSeq: res.first_bad_seq, via: 'local' });
+        return;
+      }
+      // Compare against the QR head when we have one, else against the stored head (server hashes).
+      const expected = qrHead ?? shortHead(view.chain_head);
+      if (!expected) {
+        setVerify({ kind: 'unverified', reason: 'no_head' });
+        return;
+      }
+      const headMatches = typeof res.chain_head === 'string' && res.chain_head.startsWith(expected);
+      setVerify(headMatches ? { kind: 'verified', length: res.length, via: 'local', headChecked: qrHead !== null } : { kind: 'tampered', firstBadSeq: null, via: 'local' });
     } catch {
       setVerify({ kind: 'unverified', reason: 'error' });
     } finally {
       setVerifying(false);
     }
-  }, [view, expectedHead, online]);
+  }, [view, qrHead, online]);
 
   useEffect(() => {
     if (view) void runVerify();
   }, [view, runVerify]);
 
+  // Prefer the server's canonical pass_url (PUBLIC_BASE_URL); offline copies build the same shape locally.
   const passUrl = useMemo(() => {
+    if (view?.pass_url) return view.pass_url;
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    const h = shortHead(view?.chain_head) ?? queryHead;
+    // Only the validated QR head may be re-embedded (never the raw ?h=, which anyone could craft).
+    const h = shortHead(view?.chain_head) ?? qrHead;
     return `${origin}/pass/${id}${h ? `?h=${h}` : ''}`;
-  }, [id, view?.chain_head, queryHead]);
+  }, [id, view?.pass_url, view?.chain_head, qrHead]);
 
   const copyLink = useCallback(async () => {
     try {
@@ -257,6 +302,11 @@ export default function QualityPass(): JSX.Element {
             {view.simulated && <SimBadge />}
             {view.display_name && <span className="text-sm text-gray-600">{t('shared_by', { name: view.display_name })}</span>}
           </div>
+        )}
+        {view?.generated_at && (
+          <p className="mt-1 text-xs text-gray-500" data-testid="pass-generated-at">
+            {t('generated_at', { time: f.dateTime(view.generated_at) })}
+          </p>
         )}
       </header>
 
@@ -301,15 +351,15 @@ export default function QualityPass(): JSX.Element {
 
           <ThermalTimeline readings={view.readings} harvestedAt={view.harvested_at} protocol={protocol} />
 
-          <VerifyBadge state={verify} head={view.chain_head} onReverify={() => void runVerify()} busy={verifying} />
+          <VerifyBadge state={verify} head={view.chain_head} chainLength={view.chain_length} onReverify={() => void runVerify()} busy={verifying} />
 
           <section className="card flex flex-col items-center gap-3">
             <PassQr url={passUrl} />
             <div className="flex w-full gap-2">
-              <Button variant="secondary" className="flex-1 !min-h-12" onClick={() => void copyLink()}>
+              <Button variant="secondary" className="flex-1" onClick={() => void copyLink()}>
                 {t('copy_link')}
               </Button>
-              <Button className="flex-1 !min-h-12" onClick={() => void share()}>
+              <Button className="flex-1" onClick={() => void share()}>
                 {t('share')}
               </Button>
             </div>

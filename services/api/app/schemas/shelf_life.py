@@ -31,10 +31,14 @@ class Segment(ApiModel):
 
 
 class Breach(ApiModel):
+    """First hard-threshold breach: the threshold's type/value_c/label and the offending reading."""
+
     type: ThresholdType
     value_c: float
     reading_id: str | None = None
     at: UtcDatetime
+    # The hard_threshold `label` (e.g. "heat_damage", "freeze"); None if the protocol has none.
+    label: str | None = None
 
 
 class ShelfLifeEstimate(ApiModel):

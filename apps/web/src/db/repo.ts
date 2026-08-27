@@ -3,7 +3,7 @@
  * the matching outbox op in one place, so the UI never awaits the network (PRD F1/F8).
  */
 import { db, META_KEYS, type BatchRow, type OpRow, type ReadingRow } from './index';
-import { enqueue, nextClientSeq } from './outbox';
+import { enqueue, isRetryable, nextClientSeq } from './outbox';
 import { encodeGeohash } from '../lib/geohash';
 import { newId } from '../lib/ids';
 import { round1 } from '../lib/time';
@@ -182,18 +182,21 @@ export async function applyServerReading(reading: Reading): Promise<void> {
 
 /**
  * Merge server truth (from /sync or GET /batches) into Dexie:
- * - batches are upserted with `synced: true` unless a local op for that batch is still pending, in
- *   which case the locally patched fields win and the row stays unsynced;
+ * - batches are upserted with `synced: true` unless a local op for that batch (create, update or a
+ *   reading.append) is still pending, in which case the locally patched fields win and the row
+ *   stays unsynced. Exhausted rejected ops (see db/outbox isRetryable) no longer count as pending,
+ *   otherwise a permanently rejected update would override server fields forever;
  * - readings: server seq / hash / prev_hash / received_at are written onto local rows by id, and
  *   server-only readings are inserted.
  * Batches that exist only locally are left untouched.
  */
 export async function applyServerBatches(batches: Batch[]): Promise<void> {
   if (batches.length === 0) return;
-  const pendingOps = await db.ops.where('status').anyOf('pending', 'inflight', 'failed').toArray();
+  const pendingOps = (await db.ops.where('status').anyOf('pending', 'inflight', 'failed').toArray()).filter(isRetryable);
   const pendingBatchIds = new Set<string>();
   for (const op of pendingOps) {
     if (op.kind === 'batch.create' || op.kind === 'batch.update') pendingBatchIds.add(op.payload.id);
+    else if (op.kind === 'reading.append') pendingBatchIds.add(op.payload.batch_id);
   }
   await db.transaction('rw', db.batches, db.readings, async () => {
     for (const server of batches) {

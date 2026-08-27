@@ -38,7 +38,7 @@ current temperature.
 | id | Shape | Tomato: consumed / remaining h | Guava: consumed / remaining h | Story |
 |---|---|---|---|---|
 | `cool_morning` | 06:00 harvest, 22 -> 33 C over 8 h | 9.4 % / 27-81 (53) | 12.2 % / 15-57 (36) | Good-practice day; best case for selling far |
-| `hot_afternoon` | 33-38 C for 6 h, then 30 C (8 h) | 15.5 % / 29-93 (61) | 23.3 % / 13-68 (41) | Status-quo side of the 18 % vs 7 % comparison |
+| `hot_afternoon` | 33-38 C for 6 h, then 30 C (8 h) | 15.5 % / 29-93 (61) | 23.3 % / 13-68 (41) | Both arms of the 18 % vs 13 % comparison (sell at hour 10 vs leave at hour 4) |
 | `heat_spike` | 30 C with 2 h at 42 C at hour 3 (8 h) | 14.7 % / 30-94 (61) | 22.3 % / 13-68 (42) | Spike accelerates decay ~2.3x per hour, no hard breach (42 < 45) |
 | `reefer_van` | 1 h at 30 C, then 12 C for 10 h | 5.4 % / 187-286 (237) | 5.4 % / 175-314 (265) | Unbroken cold chain; Quality Pass demo |
 | `pre_cooled` | 30 -> 15 -> 12 C over 12 h | 5.9 % / 185-285 (236) | 5.9 % / 174-313 (263) | Best practice; distant premium markets feasible |
@@ -75,7 +75,7 @@ Loaded by `POST /api/v1/demo/seed` (idempotent thanks to fixed UUIDs) and mirror
       "intended_story": "fresh / high confidence. Recommendation: Hosur ..."
     }
   ],
-  "loss_comparison": { ... }                          // inputs + expected numbers for the 18 % vs 7 % slide
+  "loss_comparison": { ... }                          // inputs + expected numbers for the 18 % vs 13 % slide (pinned by test_routing.py)
 }
 ```
 
@@ -87,11 +87,11 @@ equals its `harvested_at`.
 
 | # | Crop, qty | Harvested | Scenario | Status / confidence | Consumed | Recommendation (expected value) | Nearest (Palacode) | Uplift |
 |---|---|---|---|---|---|---|---|---|
-| 1 | tomato 500 kg | 4 h ago | cool_morning | fresh / high | 3.6 % | **Hosur** Rs 6,638 (Bengaluru Rs 6,196 second) | Rs 4,083 | +63 % |
+| 1 | tomato 500 kg | 4 h ago | cool_morning | fresh / high | 3.6 % | **Hosur** Rs 6,608 (Bengaluru Rs 6,146 second) | Rs 4,083 | +62 % |
 | 2 | tomato 300 kg | 60 h ago | hot_afternoon | **critical** / low | 87.7 % | Palacode Rs 302 (only 10 of 13 mandis feasible) | Rs 302 | 0 % |
 | 3 | tomato 200 kg | 36 h ago | heat_spike | **warning** / low | 53.6 % | Palacode Rs 778 | Rs 778 | 0 % |
 | 4 | tomato 800 kg | 12 h ago | reefer_van | fresh / high | 5.8 % | Hosur Rs 11,085 | Rs 6,397 | +73 % |
-| 5 | guava 400 kg | 12 h ago | pre_cooled | fresh / high | 5.9 % | **Bengaluru** Rs 14,190 (Koyambedu Rs 13,604, Hosur Rs 13,320) | Rs 8,270 | +72 % |
+| 5 | guava 400 kg | 12 h ago | pre_cooled | fresh / high | 5.9 % | **Bengaluru** Rs 13,339 (Hosur Rs 12,847, Koyambedu Rs 10,969) | Rs 8,266 | +61 % |
 | 6 | guava 250 kg | 30 h ago | hot_afternoon | **warning** / low | 64.2 % | Hosur Rs 2,165 | Rs 1,956 | +11 % |
 
 Batch 4 is the Quality Pass / tamper demo (7 readings in the hash chain). Batches 2 and 3 exist so the

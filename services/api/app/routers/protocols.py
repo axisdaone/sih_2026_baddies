@@ -9,7 +9,7 @@ from app.kinetics.registry import get_protocol, list_protocols
 from app.schemas import ProtocolOut
 
 router = APIRouter(
-    prefix="/protocols", tags=["protocols"], dependencies=[Depends(rate_limited("public"))]
+    prefix="/protocols", tags=["protocols"], dependencies=[Depends(rate_limited("protocols"))]
 )
 
 

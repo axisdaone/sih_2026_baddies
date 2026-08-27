@@ -7,6 +7,12 @@ is the source of the newest rows and `stale = age(fetched_at) > PRICE_STALE_HOUR
 
 A stored `agmarknet_live` row whose `fetched_at` is older than 1.5 poll periods is reported as
 `agmarknet_cache`: the poller should have refreshed it by then, so we are serving last-known-good.
+
+Manual refreshes (`POST /prices/refresh`) go through `try_refresh_prices`: single-flight
+(`_refresh_gate`) and at most one *attempt* per PRICE_REFRESH_COOLDOWN_S regardless of outcome,
+so a looped call can neither monopolise the threadpool nor burn the shared data.gov.in key.
+The poller uses the raw `refresh_prices` (never starved by the endpoint cooldown) but takes
+the same gate, so a poll and a manual refresh never overlap.
 """
 
 from __future__ import annotations
@@ -14,6 +20,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import threading
+import time
 from collections.abc import Coroutine, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
@@ -38,6 +45,9 @@ log = logging.getLogger(__name__)
 
 # Serialises writers in this process (poller thread vs. request threads on SQLite).
 _write_lock = threading.Lock()
+# Single-flight for whole refresh runs (poller + manual endpoint) and the endpoint cooldown.
+refresh_gate = threading.Lock()
+_last_refresh_attempt: float | None = None
 
 
 @dataclass(slots=True)
@@ -228,6 +238,37 @@ def refresh_prices(
         result.error = (result.error + "; " if result.error else "") + f"snapshot: {exc}"
         log.exception("bundled snapshot could not be loaded")
     return result
+
+
+def try_refresh_prices(
+    db: Session, *, live: bool = True, settings: Settings | None = None
+) -> RefreshResult | None:
+    """`refresh_prices` behind the single-flight gate + attempt cooldown; None when skipped.
+
+    The attempt timestamp is stamped *before* the fetch so failed / rate-limited attempts count
+    against the cooldown too (otherwise a 429 from upstream would invite an immediate retry).
+    """
+    global _last_refresh_attempt
+    settings = settings or get_settings()
+    if not refresh_gate.acquire(blocking=False):
+        log.info("price refresh skipped: another refresh is in flight")
+        return None
+    try:
+        now = time.monotonic()
+        last = _last_refresh_attempt
+        if last is not None and now - last < settings.PRICE_REFRESH_COOLDOWN_S:
+            log.info("price refresh skipped: attempted %.0f s ago", now - last)
+            return None
+        _last_refresh_attempt = now
+        return refresh_prices(db, live=live, settings=settings)
+    finally:
+        refresh_gate.release()
+
+
+def reset_refresh_throttle() -> None:
+    """Forget the last manual attempt (tests)."""
+    global _last_refresh_attempt
+    _last_refresh_attempt = None
 
 
 # --------------------------------------------------------------------------------------

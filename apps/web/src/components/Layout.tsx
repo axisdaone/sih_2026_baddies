@@ -4,6 +4,7 @@
  */
 import { NavLink, Outlet } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useFormat } from '../i18n/useFormat';
 import { useAppStatus } from '../state/appStatus';
 import { OfflineIndicator } from './OfflineIndicator';
 import { GearIcon, GroupIcon, HomeIcon, LeafIcon, PlusIcon } from './NavIcons';
@@ -24,6 +25,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export function TopBar({ showStatus = true }: { showStatus?: boolean }): JSX.Element {
   const { t } = useTranslation('common');
+  const f = useFormat();
   const { online, pendingOps } = useAppStatus();
   return (
     <header className="sticky top-0 z-40 border-b border-brand-700 bg-brand text-white shadow-sm">
@@ -40,7 +42,7 @@ export function TopBar({ showStatus = true }: { showStatus?: boolean }): JSX.Ele
                 aria-label={t('pending_changes', { count: pendingOps })}
                 title={online ? t('syncing') : t('pending_changes', { count: pendingOps })}
               >
-                {pendingOps}
+                {f.number(pendingOps, { maximumFractionDigits: 0 })}
               </span>
             )}
             <OfflineIndicator className="bg-white/90" />
@@ -55,7 +57,7 @@ export function BottomNav(): JSX.Element {
   const { t } = useTranslation('common');
   return (
     <nav
-      aria-label="Primary"
+      aria-label={t('nav.primary')}
       className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200 bg-white pb-safe"
       style={{ height: 'calc(var(--fs-nav-h) + var(--fs-safe-bottom))' }}
     >

@@ -10,6 +10,7 @@ farmer sets themselves, so no extra opt-in column is needed).
 from __future__ import annotations
 
 import hashlib
+import hmac
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -127,9 +128,17 @@ def qr_png_for(db: Session, batch: Batch) -> bytes:
     return qr_png(pass_url(batch.id, head))
 
 
+def _ip_hash_key() -> bytes:
+    """HMAC key derived from JWT_SECRET (key separation: the token signing key itself is never
+    used directly). The pseudonym is only as strong as the secret — ENV=prod refuses the
+    shipped placeholders in `app.config` for exactly this reason."""
+    return hashlib.sha256(f"{get_settings().JWT_SECRET}:ip-pseudonym".encode()).digest()
+
+
 def hash_ip(ip: str) -> str:
-    """Keyed SHA-256 of the client IP: enough for abuse analysis, never reversible in the DB."""
-    return hashlib.sha256(f"{get_settings().JWT_SECRET}:{ip}".encode()).hexdigest()
+    """Keyed HMAC-SHA-256 of the client IP: enough for abuse analysis, never reversible in the DB
+    while the key stays secret."""
+    return hmac.new(_ip_hash_key(), ip.encode(), hashlib.sha256).hexdigest()
 
 
 def record_pass_event(db: Session, batch_id: str, event: PassEventKind, ip: str) -> None:

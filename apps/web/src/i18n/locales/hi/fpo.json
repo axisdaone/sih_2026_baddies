@@ -20,11 +20,12 @@
     "no_estimate": "कोई अनुमान नहीं",
     "closed": "बंद",
     "select": "बैच {{name}} चुनें",
+    "open": "बैच {{name}} खोलें",
     "selected": "चुना गया",
     "no_location": "स्थान नहीं"
   },
   "crop": { "tomato": "टमाटर", "guava": "अमरूद" },
-  "batch_status": { "open": "खुला", "sold": "बिका", "spoiled": "खराब", "discarded": "हटाया गया" },
+  "batch_status": { "open": "खुला", "sold": "बिक गया", "spoiled": "खराब", "discarded": "फेंका गया" },
   "map": {
     "title": "नक्शा",
     "hint": "किसी बैच पर टैप करें — उसकी सिफ़ारिश की गई मंडी तक रेखा दिखेगी।",

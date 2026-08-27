@@ -14,7 +14,9 @@ import { RecommendationCard } from '../components/RecommendationCard';
 import { SimBadge } from '../components/SimBadge';
 import { SimPlayer } from '../components/SimPlayer';
 import { BatchStatusChip } from '../components/StatusPill';
+import { notify } from '../alerts/toast';
 import { PROTOCOLS } from '../data';
+import { isStorageError } from '../db/errors';
 import { addReadingLocal, hasSimReadings, patchBatchLocal } from '../db/repo';
 import { useBatch } from '../hooks/useBatch';
 import { useShelfLife } from '../hooks/useShelfLife';
@@ -55,12 +57,24 @@ export default function BatchDetail(): JSX.Element {
   const isOpen = batch.status === 'open';
   const cropName = t(`batch:crops.${batch.crop}`, { defaultValue: batch.crop });
 
+  // Storage failures get a translated explanation (never Dexie's raw message); the sheet stays open.
+  const explain = (err: unknown) => notify.error(isStorageError(err) ? t('common:storage_unavailable') : t('common:error_generic'));
   const addReading = async (tempC: number) => {
-    await addReadingLocal(batch.id, tempC, 'manual', batch.origin_geohash);
+    try {
+      await addReadingLocal(batch.id, tempC, 'manual', batch.origin_geohash);
+    } catch (err) {
+      explain(err);
+      throw err;
+    }
     void drain();
   };
   const setStatus = async (status: BatchStatus) => {
-    await patchBatchLocal(batch.id, { status });
+    try {
+      await patchBatchLocal(batch.id, { status });
+    } catch (err) {
+      explain(err);
+      return;
+    }
     setConfirm(null);
     void drain();
   };
@@ -76,7 +90,7 @@ export default function BatchDetail(): JSX.Element {
             </span>
             <BatchStatusChip status={batch.status} />
             {hasSimReadings(readings) && <SimBadge />}
-            {!batch.synced && <span aria-label={t('batch:card.unsynced')} title={t('batch:card.unsynced')} className="h-2.5 w-2.5 rounded-full bg-amber-500" />}
+            {!batch.synced && <span role="img" aria-label={t('batch:card.unsynced')} title={t('batch:card.unsynced')} className="h-2.5 w-2.5 rounded-full bg-amber-500" />}
           </h1>
           <p className="text-sm text-gray-600">{t('batch:detail.harvested', { time: f.dateTime(batch.harvested_at) })}</p>
           {batch.origin_lat == null && <p className="text-xs text-amber-800">{t('batch:detail.origin_assumed')}</p>}
@@ -96,7 +110,7 @@ export default function BatchDetail(): JSX.Element {
 
       <div className="grid grid-cols-2 gap-2">
         <Button onClick={() => setSheetOpen(true)} disabled={!isOpen} data-testid="add-reading">
-          🌡 {t('batch:detail.add_reading')}
+          <span aria-hidden="true">🌡</span> {t('batch:detail.add_reading')}
         </Button>
         <Link to={`/pass/${batch.id}`} className="btn-secondary">
           {t('batch:detail.quality_pass')}
@@ -132,10 +146,10 @@ export default function BatchDetail(): JSX.Element {
           ) : (
             <div className="grid grid-cols-2 gap-2">
               <Button variant="secondary" onClick={() => setConfirm('sold')}>
-                ✓ {t('batch:detail.mark_sold')}
+                <span aria-hidden="true">✓</span> {t('batch:detail.mark_sold')}
               </Button>
               <Button variant="danger" onClick={() => setConfirm('discarded')}>
-                ✕ {t('batch:detail.discard')}
+                <span aria-hidden="true">✕</span> {t('batch:detail.discard')}
               </Button>
             </div>
           )}

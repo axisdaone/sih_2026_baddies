@@ -18,7 +18,9 @@ from app.quality_pass.service import (
 from app.schemas import QualityPassPayload, QualityPassVerify
 
 router = APIRouter(
-    prefix="/quality-pass", tags=["quality-pass"], dependencies=[Depends(rate_limited("public"))]
+    prefix="/quality-pass",
+    tags=["quality-pass"],
+    dependencies=[Depends(rate_limited("quality_pass"))],
 )
 
 

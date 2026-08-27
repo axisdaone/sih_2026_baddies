@@ -1,5 +1,10 @@
-/** Big-key numeric pad for temperatures / quantities (glove-friendly, no OS keyboard). */
+/**
+ * Big-key numeric pad for temperatures / quantities (glove-friendly, no OS keyboard).
+ * Key caps follow the numerals preference (Devanagari / Tamil digits) while the emitted value stays
+ * Latin so parseTemp / Number keep working.
+ */
 import { useTranslation } from 'react-i18next';
+import { useFormat } from '../i18n/useFormat';
 
 export interface NumericPadProps {
   value: string;
@@ -15,6 +20,7 @@ const KEYS = ['7', '8', '9', '4', '5', '6', '1', '2', '3'] as const;
 
 export function NumericPad({ value, onChange, allowNegative = false, allowDecimal = true, maxLength = 6, className = '' }: NumericPadProps): JSX.Element {
   const { t } = useTranslation('batch');
+  const f = useFormat();
   const press = (k: string) => {
     if (k === 'back') return onChange(value.slice(0, -1));
     if (k === 'neg') {
@@ -32,15 +38,15 @@ export function NumericPad({ value, onChange, allowNegative = false, allowDecima
   return (
     <div className={`grid grid-cols-3 gap-2 ${className}`} role="group" aria-label={t('pad.aria')}>
       {KEYS.map((k) => (
-        <button key={k} type="button" className={keyClass} onClick={() => press(k)}>
-          {k}
+        <button key={k} type="button" className={keyClass} onClick={() => press(k)} data-key={k}>
+          {f.digits(k)}
         </button>
       ))}
       <button type="button" className={keyClass} onClick={() => press(allowNegative ? 'neg' : '.')} disabled={!allowNegative && !allowDecimal} aria-label={allowNegative ? t('pad.negative') : t('pad.decimal')}>
         {allowNegative ? '±' : '.'}
       </button>
-      <button type="button" className={keyClass} onClick={() => press('0')}>
-        0
+      <button type="button" className={keyClass} onClick={() => press('0')} data-key="0">
+        {f.digits('0')}
       </button>
       {allowNegative && allowDecimal ? (
         <button type="button" className={keyClass} onClick={() => press('.')} aria-label={t('pad.decimal')}>

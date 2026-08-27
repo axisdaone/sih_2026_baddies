@@ -36,4 +36,5 @@ class DemoScenarioOut(ApiModel):
     description: str
     suitable_protocols: list[str]
     readings: list[ScenarioReading]
+    expected_story: str = ""  # what the engine should show, in words (demo narrator / "why" copy)
     simulated: bool = True

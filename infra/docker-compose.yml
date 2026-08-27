@@ -1,12 +1,14 @@
 # FarmSignal - container stack (SIH 2026 prototype).
 #
 #   Dev / demo (SQLite, no external services):
+#     export JWT_SECRET=$(openssl rand -hex 32)   # required; the API exits without it when ENV=prod
+#     export DEMO_MODE=true                        # pitch host only (demo token, simulate, price refresh)
 #     docker compose -f infra/docker-compose.yml up --build
 #       -> http://localhost:80   edge (nginx: / -> web, /api -> api, rate limits, gzip, caching)
 #       -> http://localhost:8080 web container directly (static bundle only)
 #       -> http://localhost:8000 not published; reach the API through the edge (/api/v1/health)
 #
-#   Prod-style (Postgres 16 + Redis 7):
+#   Prod-style (Postgres 16; the API keeps its price cache and rate-limit state in-process):
 #     docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml --profile prod up -d --build
 #
 # Environment values come from services/api/.env.example (if present) and are overridden by the
@@ -31,16 +33,24 @@ services:
       DATABASE_URL: ${DATABASE_URL:-sqlite:////var/lib/farmsignal/farmsignal.db}
       # Bundled data (mandis, snapshot prices, demo scenarios) is mounted read-only from the repo.
       DATA_DIR: /srv/farmsignal/data
-      JWT_SECRET: ${JWT_SECRET:-farmsignal-dev-secret-change-me}
+      # Required: the API refuses the dev default secret when ENV=prod. Generate: openssl rand -hex 32
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set (openssl rand -hex 32)}
       JWT_TTL_DAYS: ${JWT_TTL_DAYS:-30}
+      # The edge (nginx) sets X-Real-IP / X-Forwarded-For; trust them so per-client rate limits work.
+      TRUST_PROXY: "true"
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://localhost:8080,http://localhost:5173}
       # data.gov.in public sample key by default (rate limited, fine for demo).
       AGMARKNET_API_KEY: ${AGMARKNET_API_KEY:-579b464db66ec23bdd000001cdd3946e44ce4aad7209ff7b23ac571b}
       PRICE_POLL_HOURS: ${PRICE_POLL_HOURS:-6}
       PRICE_STALE_HOURS: ${PRICE_STALE_HOURS:-30}
-      DEMO_MODE: ${DEMO_MODE:-true}
+      # Off by default. The pitch host sets DEMO_MODE=true explicitly: it enables the anonymous demo
+      # token (write access to the demo batches), POST /prices/refresh and POST /batches/{id}/simulate.
+      DEMO_MODE: ${DEMO_MODE:-false}
+      # Needed only for POST /demo/seed?reset=true (sent as X-Demo-Admin-Token).
+      DEMO_ADMIN_TOKEN: ${DEMO_ADMIN_TOKEN:-}
       RATE_LIMIT_PER_MIN: ${RATE_LIMIT_PER_MIN:-60}
+      AUTH_RATE_LIMIT_PER_MIN: ${AUTH_RATE_LIMIT_PER_MIN:-10}
     volumes:
       - api_data:/var/lib/farmsignal
       - ../data:/srv/farmsignal/data:ro
@@ -119,20 +129,10 @@ services:
       timeout: 5s
       retries: 10
 
-  redis:
-    image: redis:7-alpine
-    profiles: ["prod"]
-    restart: unless-stopped
-    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
-    volumes:
-      - redis_data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 10
+  # No Redis: nothing in the API reads REDIS_URL today (config.py has no such setting). The price
+  # cache and the sliding-window rate limiter are in-process, which the PRD allows for the demo and
+  # which is correct as long as a single API process runs. A shared cache is a Phase 2 item.
 
 volumes:
   api_data:
   pg_data:
-  redis_data:

@@ -1,0 +1,1468 @@
+{
+  "model_version": "kinetics-1.0",
+  "generated_from": "golden_kinetics.json",
+  "cases": [
+    {
+      "id": "tomato_no_readings_assumed_ambient",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T06:30:00Z",
+        "status": "fresh",
+        "confidence": "low",
+        "consumed_fraction": 0.0833,
+        "remaining_fraction": 0.9167,
+        "remaining_hours": {
+          "low": 35.7,
+          "mid": 66.0,
+          "high": 97.7
+        },
+        "expected_end": {
+          "low": "2026-08-28T18:12:00Z",
+          "mid": "2026-08-30T00:30:00Z",
+          "high": "2026-08-31T08:12:00Z"
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": null,
+        "thermal_load_degree_hours": 120.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T06:30:00Z",
+            "temp_c": 30.0,
+            "hours": 6.0,
+            "rate": 4.0,
+            "assumed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_anchor_10c",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T00:30:00Z",
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 240.0,
+          "mid": 288.0,
+          "high": 336.0
+        },
+        "expected_end": {
+          "low": "2026-09-06T00:30:00Z",
+          "mid": "2026-09-08T00:30:00Z",
+          "high": "2026-09-10T00:30:00Z"
+        },
+        "current_temp_c": 10.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": []
+      }
+    },
+    {
+      "id": "tomato_anchor_20c",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T00:30:00Z",
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 100.0,
+          "mid": 144.0,
+          "high": 186.7
+        },
+        "expected_end": {
+          "low": "2026-08-31T04:30:00Z",
+          "mid": "2026-09-02T00:30:00Z",
+          "high": "2026-09-03T19:12:00Z"
+        },
+        "current_temp_c": 20.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": []
+      }
+    },
+    {
+      "id": "tomato_anchor_30c",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T00:30:00Z",
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 41.7,
+          "mid": 72.0,
+          "high": 103.7
+        },
+        "expected_end": {
+          "low": "2026-08-28T18:12:00Z",
+          "mid": "2026-08-30T00:30:00Z",
+          "high": "2026-08-31T08:12:00Z"
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": []
+      }
+    },
+    {
+      "id": "guava_anchor_10c",
+      "estimate": {
+        "protocol_id": "guava",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T00:30:00Z",
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 240.0,
+          "mid": 336.0,
+          "high": 384.0
+        },
+        "expected_end": {
+          "low": "2026-09-06T00:30:00Z",
+          "mid": "2026-09-10T00:30:00Z",
+          "high": "2026-09-12T00:30:00Z"
+        },
+        "current_temp_c": 10.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": []
+      }
+    },
+    {
+      "id": "guava_anchor_20c",
+      "estimate": {
+        "protocol_id": "guava",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T00:30:00Z",
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 80.0,
+          "mid": 134.4,
+          "high": 174.5
+        },
+        "expected_end": {
+          "low": "2026-08-30T08:30:00Z",
+          "mid": "2026-09-01T14:54:00Z",
+          "high": "2026-09-03T07:00:00Z"
+        },
+        "current_temp_c": 20.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": []
+      }
+    },
+    {
+      "id": "guava_anchor_30c",
+      "estimate": {
+        "protocol_id": "guava",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T00:30:00Z",
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 26.7,
+          "mid": 53.8,
+          "high": 79.3
+        },
+        "expected_end": {
+          "low": "2026-08-28T03:12:00Z",
+          "mid": "2026-08-29T06:18:00Z",
+          "high": "2026-08-30T07:48:00Z"
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": []
+      }
+    },
+    {
+      "id": "guava_chilling_floor_clamp",
+      "estimate": {
+        "protocol_id": "guava",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T05:30:00Z",
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0124,
+        "remaining_fraction": 0.9876,
+        "remaining_hours": {
+          "low": 294.0,
+          "mid": 398.6,
+          "high": 444.6
+        },
+        "expected_end": {
+          "low": "2026-09-08T11:30:00Z",
+          "mid": "2026-09-12T20:06:00Z",
+          "high": "2026-09-14T18:06:00Z"
+        },
+        "current_temp_c": 4.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 5.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T05:30:00Z",
+            "temp_c": 4.0,
+            "hours": 5.0,
+            "rate": 0.8326,
+            "assumed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_constant_30c_after_6h",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T06:30:00Z",
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0833,
+        "remaining_fraction": 0.9167,
+        "remaining_hours": {
+          "low": 35.7,
+          "mid": 66.0,
+          "high": 97.7
+        },
+        "expected_end": {
+          "low": "2026-08-28T18:12:00Z",
+          "mid": "2026-08-30T00:30:00Z",
+          "high": "2026-08-31T08:12:00Z"
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 3.0,
+        "thermal_load_degree_hours": 120.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 30.0,
+            "hours": 3.0,
+            "rate": 4.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T03:30:00Z",
+            "to": "2026-08-27T06:30:00Z",
+            "temp_c": 30.0,
+            "hours": 3.0,
+            "rate": 4.0,
+            "assumed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_stale_single_reading",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T10:30:00Z",
+        "status": "fresh",
+        "confidence": "low",
+        "consumed_fraction": 0.1209,
+        "remaining_fraction": 0.8791,
+        "remaining_hours": {
+          "low": 39.6,
+          "mid": 72.7,
+          "high": 106.6
+        },
+        "expected_end": {
+          "low": "2026-08-29T02:06:00Z",
+          "mid": "2026-08-30T11:12:00Z",
+          "high": "2026-08-31T21:06:00Z"
+        },
+        "current_temp_c": 28.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 10.0,
+        "thermal_load_degree_hours": 180.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T10:30:00Z",
+            "temp_c": 28.0,
+            "hours": 10.0,
+            "rate": 3.4822,
+            "assumed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_reading_before_harvest_clamped",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T04:30:00Z",
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.0474,
+        "remaining_fraction": 0.9526,
+        "remaining_hours": {
+          "low": 38.4,
+          "mid": 68.6,
+          "high": 100.2
+        },
+        "expected_end": {
+          "low": "2026-08-28T18:54:00Z",
+          "mid": "2026-08-30T01:06:00Z",
+          "high": "2026-08-31T08:42:00Z"
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 2.0,
+        "thermal_load_degree_hours": 70.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 25.0,
+            "hours": 2.0,
+            "rate": 2.8284,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T04:30:00Z",
+            "temp_c": 30.0,
+            "hours": 2.0,
+            "rate": 4.0,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_reading_after_now_dropped",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T03:30:00Z",
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0381,
+        "remaining_fraction": 0.9619,
+        "remaining_hours": {
+          "low": 46.4,
+          "mid": 79.6,
+          "high": 113.5
+        },
+        "expected_end": {
+          "low": "2026-08-29T01:54:00Z",
+          "mid": "2026-08-30T11:06:00Z",
+          "high": "2026-08-31T21:00:00Z"
+        },
+        "current_temp_c": 28.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 2.0,
+        "thermal_load_degree_hours": 56.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T01:30:00Z",
+            "temp_c": 30.0,
+            "hours": 1.0,
+            "rate": 4.0,
+            "assumed": true
+          },
+          {
+            "from": "2026-08-27T01:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 28.0,
+            "hours": 2.0,
+            "rate": 3.4822,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_hard_breach_46c",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T04:30:00Z",
+        "status": "spoiled",
+        "confidence": "high",
+        "consumed_fraction": 1.0,
+        "remaining_fraction": 0.0,
+        "remaining_hours": {
+          "low": 0.0,
+          "mid": 0.0,
+          "high": 0.0
+        },
+        "expected_end": {
+          "low": "2026-08-27T04:30:00Z",
+          "mid": "2026-08-27T04:30:00Z",
+          "high": "2026-08-27T04:30:00Z"
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 1.0,
+        "thermal_load_degree_hours": 96.0,
+        "alerts_crossed": [
+          75,
+          50,
+          25
+        ],
+        "breach": {
+          "type": "max_temp",
+          "value_c": 45.0,
+          "reading_id": "00000000-0000-4000-8000-000000000002",
+          "at": "2026-08-27T02:30:00Z",
+          "label": "heat_damage"
+        },
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 30.0,
+            "hours": 2.0,
+            "rate": 4.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 46.0,
+            "hours": 1.0,
+            "rate": 11.3137,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T03:30:00Z",
+            "to": "2026-08-27T04:30:00Z",
+            "temp_c": 30.0,
+            "hours": 1.0,
+            "rate": 4.0,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_heat_spike_42c_no_breach",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T08:30:00Z",
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.1471,
+        "remaining_fraction": 0.8529,
+        "remaining_hours": {
+          "low": 29.9,
+          "mid": 61.4,
+          "high": 93.7
+        },
+        "expected_end": {
+          "low": "2026-08-28T14:24:00Z",
+          "mid": "2026-08-29T21:54:00Z",
+          "high": "2026-08-31T06:12:00Z"
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 184.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T01:30:00Z",
+            "temp_c": 30.0,
+            "hours": 1.0,
+            "rate": 4.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T01:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 30.0,
+            "hours": 1.0,
+            "rate": 4.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 30.0,
+            "hours": 1.0,
+            "rate": 4.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T03:30:00Z",
+            "to": "2026-08-27T04:30:00Z",
+            "temp_c": 42.0,
+            "hours": 1.0,
+            "rate": 9.1896,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T04:30:00Z",
+            "to": "2026-08-27T05:30:00Z",
+            "temp_c": 42.0,
+            "hours": 1.0,
+            "rate": 9.1896,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T05:30:00Z",
+            "to": "2026-08-27T06:30:00Z",
+            "temp_c": 30.0,
+            "hours": 1.0,
+            "rate": 4.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T06:30:00Z",
+            "to": "2026-08-27T08:30:00Z",
+            "temp_c": 30.0,
+            "hours": 2.0,
+            "rate": 4.0,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_hot_afternoon_8h",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T08:30:00Z",
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.1549,
+        "remaining_fraction": 0.8451,
+        "remaining_hours": {
+          "low": 29.4,
+          "mid": 60.8,
+          "high": 93.1
+        },
+        "expected_end": {
+          "low": "2026-08-28T13:54:00Z",
+          "mid": "2026-08-29T21:18:00Z",
+          "high": "2026-08-31T05:36:00Z"
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 196.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T01:30:00Z",
+            "temp_c": 33.0,
+            "hours": 1.0,
+            "rate": 4.9246,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T01:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 35.0,
+            "hours": 1.0,
+            "rate": 5.6569,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 36.5,
+            "hours": 1.0,
+            "rate": 6.2767,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T03:30:00Z",
+            "to": "2026-08-27T04:30:00Z",
+            "temp_c": 38.0,
+            "hours": 1.0,
+            "rate": 6.9644,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T04:30:00Z",
+            "to": "2026-08-27T05:30:00Z",
+            "temp_c": 37.5,
+            "hours": 1.0,
+            "rate": 6.7272,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T05:30:00Z",
+            "to": "2026-08-27T06:30:00Z",
+            "temp_c": 36.0,
+            "hours": 1.0,
+            "rate": 6.0629,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T06:30:00Z",
+            "to": "2026-08-27T08:30:00Z",
+            "temp_c": 30.0,
+            "hours": 2.0,
+            "rate": 4.0,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_cool_morning_8h",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T08:30:00Z",
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.0944,
+        "remaining_fraction": 0.9056,
+        "remaining_hours": {
+          "low": 27.0,
+          "mid": 53.0,
+          "high": 81.1
+        },
+        "expected_end": {
+          "low": "2026-08-28T11:30:00Z",
+          "mid": "2026-08-29T13:30:00Z",
+          "high": "2026-08-30T17:36:00Z"
+        },
+        "current_temp_c": 33.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 137.5,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T01:30:00Z",
+            "temp_c": 22.0,
+            "hours": 1.0,
+            "rate": 2.2974,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T01:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 23.0,
+            "hours": 1.0,
+            "rate": 2.4623,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 24.5,
+            "hours": 1.0,
+            "rate": 2.7321,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T03:30:00Z",
+            "to": "2026-08-27T04:30:00Z",
+            "temp_c": 26.0,
+            "hours": 1.0,
+            "rate": 3.0314,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T04:30:00Z",
+            "to": "2026-08-27T05:30:00Z",
+            "temp_c": 28.0,
+            "hours": 1.0,
+            "rate": 3.4822,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T05:30:00Z",
+            "to": "2026-08-27T06:30:00Z",
+            "temp_c": 30.0,
+            "hours": 1.0,
+            "rate": 4.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T06:30:00Z",
+            "to": "2026-08-27T07:30:00Z",
+            "temp_c": 31.5,
+            "hours": 1.0,
+            "rate": 4.4383,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T07:30:00Z",
+            "to": "2026-08-27T08:30:00Z",
+            "temp_c": 32.5,
+            "hours": 1.0,
+            "rate": 4.7568,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_reefer_van_11h",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T11:30:00Z",
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.0538,
+        "remaining_fraction": 0.9462,
+        "remaining_hours": {
+          "low": 186.6,
+          "mid": 237.2,
+          "high": 285.9
+        },
+        "expected_end": {
+          "low": "2026-09-04T06:06:00Z",
+          "mid": "2026-09-06T08:42:00Z",
+          "high": "2026-09-08T09:24:00Z"
+        },
+        "current_temp_c": 12.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 40.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T01:30:00Z",
+            "temp_c": 30.0,
+            "hours": 1.0,
+            "rate": 4.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T01:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 12.0,
+            "hours": 2.0,
+            "rate": 1.1487,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T03:30:00Z",
+            "to": "2026-08-27T05:30:00Z",
+            "temp_c": 12.0,
+            "hours": 2.0,
+            "rate": 1.1487,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T05:30:00Z",
+            "to": "2026-08-27T07:30:00Z",
+            "temp_c": 12.0,
+            "hours": 2.0,
+            "rate": 1.1487,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T07:30:00Z",
+            "to": "2026-08-27T09:30:00Z",
+            "temp_c": 12.0,
+            "hours": 2.0,
+            "rate": 1.1487,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T09:30:00Z",
+            "to": "2026-08-27T11:30:00Z",
+            "temp_c": 12.0,
+            "hours": 2.0,
+            "rate": 1.1487,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_hot_afternoon_36h_warning",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-28T12:30:00Z",
+        "status": "warning",
+        "confidence": "low",
+        "consumed_fraction": 0.5438,
+        "remaining_fraction": 0.4562,
+        "remaining_hours": {
+          "low": 1.4,
+          "mid": 32.8,
+          "high": 65.1
+        },
+        "expected_end": {
+          "low": "2026-08-28T13:54:00Z",
+          "mid": "2026-08-29T21:18:00Z",
+          "high": "2026-08-31T05:36:00Z"
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 28.0,
+        "thermal_load_degree_hours": 756.0,
+        "alerts_crossed": [
+          75,
+          50
+        ],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T01:30:00Z",
+            "temp_c": 33.0,
+            "hours": 1.0,
+            "rate": 4.9246,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T01:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 35.0,
+            "hours": 1.0,
+            "rate": 5.6569,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 36.5,
+            "hours": 1.0,
+            "rate": 6.2767,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T03:30:00Z",
+            "to": "2026-08-27T04:30:00Z",
+            "temp_c": 38.0,
+            "hours": 1.0,
+            "rate": 6.9644,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T04:30:00Z",
+            "to": "2026-08-27T05:30:00Z",
+            "temp_c": 37.5,
+            "hours": 1.0,
+            "rate": 6.7272,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T05:30:00Z",
+            "to": "2026-08-27T06:30:00Z",
+            "temp_c": 36.0,
+            "hours": 1.0,
+            "rate": 6.0629,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T06:30:00Z",
+            "to": "2026-08-27T08:30:00Z",
+            "temp_c": 30.0,
+            "hours": 2.0,
+            "rate": 4.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T08:30:00Z",
+            "to": "2026-08-28T12:30:00Z",
+            "temp_c": 30.0,
+            "hours": 28.0,
+            "rate": 4.0,
+            "assumed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "tomato_hot_afternoon_60h_critical",
+      "estimate": {
+        "protocol_id": "tomato",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-29T12:30:00Z",
+        "status": "critical",
+        "confidence": "low",
+        "consumed_fraction": 0.8771,
+        "remaining_fraction": 0.1229,
+        "remaining_hours": {
+          "low": 0.0,
+          "mid": 8.8,
+          "high": 41.1
+        },
+        "expected_end": {
+          "low": "2026-08-29T12:30:00Z",
+          "mid": "2026-08-29T21:18:00Z",
+          "high": "2026-08-31T05:36:00Z"
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 52.0,
+        "thermal_load_degree_hours": 1236.0,
+        "alerts_crossed": [
+          75,
+          50,
+          25
+        ],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T01:30:00Z",
+            "temp_c": 33.0,
+            "hours": 1.0,
+            "rate": 4.9246,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T01:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 35.0,
+            "hours": 1.0,
+            "rate": 5.6569,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 36.5,
+            "hours": 1.0,
+            "rate": 6.2767,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T03:30:00Z",
+            "to": "2026-08-27T04:30:00Z",
+            "temp_c": 38.0,
+            "hours": 1.0,
+            "rate": 6.9644,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T04:30:00Z",
+            "to": "2026-08-27T05:30:00Z",
+            "temp_c": 37.5,
+            "hours": 1.0,
+            "rate": 6.7272,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T05:30:00Z",
+            "to": "2026-08-27T06:30:00Z",
+            "temp_c": 36.0,
+            "hours": 1.0,
+            "rate": 6.0629,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T06:30:00Z",
+            "to": "2026-08-27T08:30:00Z",
+            "temp_c": 30.0,
+            "hours": 2.0,
+            "rate": 4.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T08:30:00Z",
+            "to": "2026-08-29T12:30:00Z",
+            "temp_c": 30.0,
+            "hours": 52.0,
+            "rate": 4.0,
+            "assumed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "guava_pre_cooled_12h",
+      "estimate": {
+        "protocol_id": "guava",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T12:30:00Z",
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.0591,
+        "remaining_fraction": 0.9409,
+        "remaining_hours": {
+          "low": 174.0,
+          "mid": 263.2,
+          "high": 312.6
+        },
+        "expected_end": {
+          "low": "2026-09-03T18:30:00Z",
+          "mid": "2026-09-07T11:42:00Z",
+          "high": "2026-09-09T13:06:00Z"
+        },
+        "current_temp_c": 12.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 45.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T01:30:00Z",
+            "temp_c": 30.0,
+            "hours": 1.0,
+            "rate": 6.25,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T01:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 15.0,
+            "hours": 1.0,
+            "rate": 1.5811,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T04:30:00Z",
+            "temp_c": 12.0,
+            "hours": 2.0,
+            "rate": 1.2011,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T04:30:00Z",
+            "to": "2026-08-27T06:30:00Z",
+            "temp_c": 12.0,
+            "hours": 2.0,
+            "rate": 1.2011,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T06:30:00Z",
+            "to": "2026-08-27T08:30:00Z",
+            "temp_c": 12.0,
+            "hours": 2.0,
+            "rate": 1.2011,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T08:30:00Z",
+            "to": "2026-08-27T10:30:00Z",
+            "temp_c": 12.0,
+            "hours": 2.0,
+            "rate": 1.2011,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T10:30:00Z",
+            "to": "2026-08-27T12:30:00Z",
+            "temp_c": 12.0,
+            "hours": 2.0,
+            "rate": 1.2011,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "pharma_anchor_half_budget",
+      "estimate": {
+        "protocol_id": "pharma_2_8",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T12:30:00Z",
+        "status": "warning",
+        "confidence": "medium",
+        "consumed_fraction": 0.5,
+        "remaining_fraction": 0.5,
+        "remaining_hours": {
+          "low": 4.8,
+          "mid": 6.0,
+          "high": 7.2
+        },
+        "expected_end": {
+          "low": "2026-08-27T17:18:00Z",
+          "mid": "2026-08-27T18:30:00Z",
+          "high": "2026-08-27T19:42:00Z"
+        },
+        "current_temp_c": 5.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 6.0,
+        "thermal_load_degree_hours": 60.0,
+        "alerts_crossed": [
+          75,
+          50
+        ],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T06:30:00Z",
+            "temp_c": 15.0,
+            "hours": 6.0,
+            "rate": 1.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T06:30:00Z",
+            "to": "2026-08-27T12:30:00Z",
+            "temp_c": 5.0,
+            "hours": 6.0,
+            "rate": 0.0,
+            "assumed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "pharma_in_band_no_consumption",
+      "estimate": {
+        "protocol_id": "pharma_2_8",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T03:30:00Z",
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 10.8,
+          "mid": 12.0,
+          "high": 13.2
+        },
+        "expected_end": {
+          "low": "2026-08-27T14:18:00Z",
+          "mid": "2026-08-27T15:30:00Z",
+          "high": "2026-08-27T16:42:00Z"
+        },
+        "current_temp_c": 5.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 3.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 5.0,
+            "hours": 3.0,
+            "rate": 0.0,
+            "assumed": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "pharma_currently_out_of_band",
+      "estimate": {
+        "protocol_id": "pharma_2_8",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T03:30:00Z",
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.0833,
+        "remaining_fraction": 0.9167,
+        "remaining_hours": {
+          "low": 9.8,
+          "mid": 11.0,
+          "high": 12.2
+        },
+        "expected_end": {
+          "low": "2026-08-27T13:18:00Z",
+          "mid": "2026-08-27T14:30:00Z",
+          "high": "2026-08-27T15:42:00Z"
+        },
+        "current_temp_c": 12.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 1.0,
+        "thermal_load_degree_hours": 7.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 5.0,
+            "hours": 2.0,
+            "rate": 0.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 12.0,
+            "hours": 1.0,
+            "rate": 1.0,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "pharma_excursion_scenario_12h",
+      "estimate": {
+        "protocol_id": "pharma_2_8",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T12:30:00Z",
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.3333,
+        "remaining_fraction": 0.6667,
+        "remaining_hours": {
+          "low": 6.8,
+          "mid": 8.0,
+          "high": 9.2
+        },
+        "expected_end": {
+          "low": "2026-08-27T19:18:00Z",
+          "mid": "2026-08-27T20:30:00Z",
+          "high": "2026-08-27T21:42:00Z"
+        },
+        "current_temp_c": 5.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 40.0,
+        "alerts_crossed": [
+          75
+        ],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T01:30:00Z",
+            "temp_c": 5.0,
+            "hours": 1.0,
+            "rate": 0.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T01:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 5.0,
+            "hours": 1.0,
+            "rate": 0.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T03:30:00Z",
+            "temp_c": 15.0,
+            "hours": 1.0,
+            "rate": 1.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T03:30:00Z",
+            "to": "2026-08-27T04:30:00Z",
+            "temp_c": 15.0,
+            "hours": 1.0,
+            "rate": 1.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T04:30:00Z",
+            "to": "2026-08-27T05:30:00Z",
+            "temp_c": 15.0,
+            "hours": 1.0,
+            "rate": 1.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T05:30:00Z",
+            "to": "2026-08-27T06:30:00Z",
+            "temp_c": 15.0,
+            "hours": 1.0,
+            "rate": 1.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T06:30:00Z",
+            "to": "2026-08-27T08:30:00Z",
+            "temp_c": 5.0,
+            "hours": 2.0,
+            "rate": 0.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T08:30:00Z",
+            "to": "2026-08-27T10:30:00Z",
+            "temp_c": 5.0,
+            "hours": 2.0,
+            "rate": 0.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T10:30:00Z",
+            "to": "2026-08-27T12:30:00Z",
+            "temp_c": 5.0,
+            "hours": 2.0,
+            "rate": 0.0,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "pharma_freeze_scenario_breach",
+      "estimate": {
+        "protocol_id": "pharma_2_8",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T04:30:00Z",
+        "status": "spoiled",
+        "confidence": "high",
+        "consumed_fraction": 1.0,
+        "remaining_fraction": 0.0,
+        "remaining_hours": {
+          "low": 0.0,
+          "mid": 0.0,
+          "high": 0.0
+        },
+        "expected_end": {
+          "low": "2026-08-27T04:30:00Z",
+          "mid": "2026-08-27T04:30:00Z",
+          "high": "2026-08-27T04:30:00Z"
+        },
+        "current_temp_c": 5.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [
+          75,
+          50,
+          25
+        ],
+        "breach": {
+          "type": "min_temp",
+          "value_c": 0.0,
+          "reading_id": "00000000-0000-4000-8000-000000000003",
+          "at": "2026-08-27T02:30:00Z",
+          "label": "freeze"
+        },
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T01:30:00Z",
+            "temp_c": 5.0,
+            "hours": 1.0,
+            "rate": 0.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T01:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 5.0,
+            "hours": 1.0,
+            "rate": 0.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T02:30:00Z",
+            "to": "2026-08-27T03:00:00Z",
+            "temp_c": -1.0,
+            "hours": 0.5,
+            "rate": 1.0,
+            "assumed": false
+          },
+          {
+            "from": "2026-08-27T03:00:00Z",
+            "to": "2026-08-27T04:30:00Z",
+            "temp_c": 5.0,
+            "hours": 1.5,
+            "rate": 0.0,
+            "assumed": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "pharma_no_readings_assumed_25c",
+      "estimate": {
+        "protocol_id": "pharma_2_8",
+        "model_version": "kinetics-1.0",
+        "computed_at": "2026-08-27T02:30:00Z",
+        "status": "fresh",
+        "confidence": "low",
+        "consumed_fraction": 0.1667,
+        "remaining_fraction": 0.8333,
+        "remaining_hours": {
+          "low": 8.8,
+          "mid": 10.0,
+          "high": 11.2
+        },
+        "expected_end": {
+          "low": "2026-08-27T11:18:00Z",
+          "mid": "2026-08-27T12:30:00Z",
+          "high": "2026-08-27T13:42:00Z"
+        },
+        "current_temp_c": 25.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": null,
+        "thermal_load_degree_hours": 40.0,
+        "alerts_crossed": [],
+        "breach": null,
+        "segments": [
+          {
+            "from": "2026-08-27T00:30:00Z",
+            "to": "2026-08-27T02:30:00Z",
+            "temp_c": 25.0,
+            "hours": 2.0,
+            "rate": 1.0,
+            "assumed": true
+          }
+        ]
+      }
+    }
+  ]
+}

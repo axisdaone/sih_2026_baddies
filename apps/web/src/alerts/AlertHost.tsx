@@ -50,7 +50,7 @@ export function AlertHost(): JSX.Element | null {
             {toast.to && (
               <button
                 type="button"
-                className="mt-2 min-h-10 rounded-lg bg-white/70 px-3 text-sm font-semibold underline-offset-2 hover:underline"
+                className="mt-2 min-h-14 rounded-lg bg-white/70 px-4 text-sm font-semibold underline-offset-2 hover:underline"
                 onClick={() => {
                   dismissToast(toast.id);
                   navigate(toast.to as string);
@@ -63,7 +63,7 @@ export function AlertHost(): JSX.Element | null {
           <button
             type="button"
             aria-label={t('dismiss')}
-            className="-mr-1 -mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl leading-none hover:bg-black/5"
+            className="-mr-2 -mt-2 flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-xl leading-none hover:bg-black/5"
             onClick={() => dismissToast(toast.id)}
           >
             ×

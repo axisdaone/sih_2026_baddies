@@ -54,7 +54,7 @@
           "source": "sim"
         }
       ],
-      "intended_story": "fresh / high confidence. Recommendation: Hosur (~+63% expected value vs nearest mandi Palacode; Bengaluru a close second). Used for the airplane-mode logging and the 'why' screen."
+      "intended_story": "fresh / high confidence. Recommendation: Hosur (~+62% expected value vs nearest mandi Palacode; Bengaluru a close second). Used for the airplane-mode logging and the 'why' screen."
     },
     {
       "id": "9b8e7d6c-5a4b-4c3d-9e2f-1a0b9c8d7e02",
@@ -362,7 +362,8 @@
     }
   ],
   "loss_comparison": {
-    "title": "18% vs 7%: the pitch comparison, computed live by the engine",
+    "title": "18 % vs 13 %: same batch, same weather, one decision - reproduced from the engine by services/api/tests/test_routing.py",
+    "what_is_compared": "The two main arms use the same hot_afternoon temperature profile, so the only variable is the decision FarmSignal controls: when the batch moves and to which mandi. The percentage is the mid-scenario fraction of shelf life consumed at the moment of sale (the routing payload's consumed_at_arrival), not physical or economic loss - both batches are still status 'fresh'. The rupee figure is the routing engine's expected_value_inr with the bundled snapshot prices.",
     "crop": "tomato",
     "qty_kg": 500,
     "baseline": {
@@ -370,19 +371,28 @@
       "scenario": "hot_afternoon",
       "evaluate_at_offset_hours": 10,
       "mandi_id": "palacode",
-      "explanation": "8 h of hot_afternoon readings plus 2 h waiting at the last reading (30 C, transit at 30 C), then the 1 km trip to Palacode. Loss = consumed shelf-life fraction at arrival.",
-      "expected_loss_pct": 18.3,
+      "explanation": "8 h of hot_afternoon readings (33-38 C, then 30 C) plus 2 h waiting at the last reading, then the 1 km trip to Palacode at 30 C. At this same hour the engine already recommends Hosur (Rs 5,438, +57 %): 'status quo' means ignoring the recommendation, not a different engine path.",
+      "consumed_at_sale_pct": 18.3,
       "expected_value_inr": 3462
     },
     "farmsignal": {
-      "label": "FarmSignal: leave at hour 4 for the recommended mandi",
+      "label": "FarmSignal: leave at hour 4 for the recommended mandi (same weather)",
+      "scenario": "hot_afternoon",
+      "evaluate_at_offset_hours": 4,
+      "mandi_id": "hosur",
+      "explanation": "4 h of the same hot_afternoon readings, then the 2.1 h trip to Hosur at 37.5 C (the last reading is under 2 h old, so it is used as the transit temperature). Realised value +76 % over the baseline.",
+      "consumed_at_sale_pct": 13.1,
+      "expected_value_inr": 6082
+    },
+    "harvest_timing_bonus": {
+      "label": "For reference: FarmSignal + cool-morning harvest (the seeded hero batch)",
       "scenario": "cool_morning",
       "evaluate_at_offset_hours": 4,
       "mandi_id": "hosur",
-      "explanation": "4 h of cool_morning readings (22-28 C), then a 2.1 h trip to Hosur at 28 C (the last reading is under 2 h old, so it is used as the transit temperature). Loss = consumed shelf-life fraction at arrival.",
-      "expected_loss_pct": 6.2,
-      "expected_value_inr": 6638
+      "explanation": "This is the hero batch shown live on stage, included so the slide and the app agree. It is NOT the headline comparison because its weather differs from the baseline (22-28 C vs 33-38 C) and FarmSignal does not control the weather. 4 h of cool_morning readings, then 2.1 h to Hosur at 28 C.",
+      "consumed_at_sale_pct": 6.5,
+      "expected_value_inr": 6608
     },
-    "honesty_note": "Both numbers come from the same kinetics + routing code path with the bundled snapshot prices; they are a simulation, not a field measurement, and the UI labels them SIMULATED."
+    "honesty_note": "All numbers come from the same kinetics + routing code path with the bundled snapshot prices and are pinned by services/api/tests/test_routing.py; they are a simulation of handling paths, not a field measurement, and the UI labels them SIMULATED."
   }
 }

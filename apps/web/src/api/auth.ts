@@ -64,22 +64,34 @@ async function doEnsure(opts: { force?: boolean }): Promise<DeviceIdentity> {
   }
   const token = getToken();
   const farmerId = await getFarmerId();
-  if ((token && !opts.force) || !isOnline()) return { deviceId, farmerId, token };
+  // A display-name change made offline (or while a token existed) is re-sent on the next online call.
+  let dirty = false;
+  try {
+    dirty = (await db.getMeta<boolean>(META_KEYS.displayNameDirty)) === true;
+  } catch {
+    /* ignore */
+  }
+  if ((token && !opts.force && !dirty) || !isOnline()) return { deviceId, farmerId, token };
 
+  // Display name (NFR privacy: opt-in). undefined = never set, so the field is omitted; '' = the
+  // farmer opted out (or cleared it), which makes the server clear the stored name.
   let displayName: string | undefined;
   try {
     const stored = await db.getMeta<string>(META_KEYS.displayName);
-    if (typeof stored === 'string' && stored.trim()) displayName = stored.trim();
+    const share = await db.getMeta<boolean>(META_KEYS.shareDisplayName);
+    if (share === false || stored === '') displayName = '';
+    else if (typeof stored === 'string' && stored.trim()) displayName = stored.trim();
   } catch {
     /* ignore */
   }
   const body: DeviceAuthRequest = { device_id: deviceId, locale: currentLocale() };
-  if (displayName) body.display_name = displayName;
+  if (displayName !== undefined) body.display_name = displayName;
   try {
     const res = await api.post<DeviceAuthResponse>('/auth/device', body, { anonymous: true });
     if (res && typeof res.token === 'string' && res.token) {
       setToken(res.token);
       await db.setMeta(META_KEYS.farmerId, res.farmer_id);
+      if (dirty) await db.meta.delete(META_KEYS.displayNameDirty);
       return { deviceId, farmerId: res.farmer_id, token: res.token };
     }
   } catch {

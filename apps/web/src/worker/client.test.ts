@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PROTOCOLS } from '../data';
 import { evaluate } from '../engine';
 import type { ReadingInput, ShelfLifeEstimate } from '../types';
+import { _resetClockForTests, setClockSkewSeconds } from '../sync/clock';
 import { estimateShelfLife, terminateKineticsWorker } from './client';
 import type { KineticsRequest, KineticsResponse } from './protocol';
 
@@ -53,6 +54,7 @@ afterEach(() => {
   terminateKineticsWorker();
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  _resetClockForTests();
   FakeWorker.instances = [];
 });
 
@@ -73,9 +75,20 @@ describe('inline fallback (no Worker global)', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-01T00:00:00.500Z'));
     const est = await estimateShelfLife({ protocol: TOMATO, harvested_at: HARVEST, readings: READINGS });
-    expect(est.computed_at).toBe('2026-09-01T00:00:00Z');
+    // The engine keeps milliseconds when non-zero (Python parity), so the .500 survives.
+    expect(est.computed_at).toBe('2026-09-01T00:00:00.500Z');
     expect(est.status).toBe('spoiled'); // 5 days at 30 C is well past 72 h
     expect(est.hours_since_last_reading).toBe(116.5);
+  });
+
+  it('defaults `now` to the clock-skew-corrected time (nowIso), not the raw device clock', async () => {
+    // Device clock is 600 s ahead of the server: local "now" must be 10 min earlier.
+    await setClockSkewSeconds(600);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-09-01T00:00:00Z'));
+    const est = await estimateShelfLife({ protocol: TOMATO, harvested_at: HARVEST, readings: READINGS });
+    expect(est.computed_at).toBe('2026-08-31T23:50:00Z');
+    expect(est.hours_since_last_reading).toBeCloseTo(116.5 - 1 / 6, 1);
   });
 
   it('rejects (rather than throwing synchronously) on bad input', async () => {

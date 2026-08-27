@@ -40,6 +40,8 @@ log = logging.getLogger(__name__)
 
 SKEW_THRESHOLD_S = 120.0
 BATCH_NOT_FOUND = "batch_not_found"
+# Constant detail for unexpected failures: the class name is logged, never echoed to clients.
+INTERNAL_ERROR = "internal error"
 
 
 @dataclass(frozen=True, slots=True)
@@ -122,9 +124,9 @@ def _apply_guarded(db: Session, farmer: Farmer, op: SyncOpIn, shift: timedelta |
         _discard(db, nested)
         return OpOutcome(SyncOpStatus.REJECTED, error=str(exc.detail))
     except Exception as exc:  # one broken op must not poison the rest of the drain
-        log.exception("sync op %s (%s) failed", op.op_id, op.kind)
+        log.exception("sync op %s (%s) failed: %s", op.op_id, op.kind, type(exc).__name__)
         _discard(db, nested)
-        return OpOutcome(SyncOpStatus.REJECTED, error=f"internal error: {type(exc).__name__}")
+        return OpOutcome(SyncOpStatus.REJECTED, error=INTERNAL_ERROR)
     if nested.is_active:  # the op made no commit of its own (e.g. a no-op duplicate)
         nested.commit()
     return outcome

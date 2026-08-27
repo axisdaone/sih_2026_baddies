@@ -12,13 +12,16 @@ export function DeviceInfo(): JSX.Element {
   const f = useFormat();
   const { online, pendingOps } = useAppStatus();
   const meta = useLiveQuery(async () => {
-    const [deviceId, displayName, lastSync, skew] = await Promise.all([
+    const [deviceId, displayName, share, lastSync, skew] = await Promise.all([
       db.getMeta<string>(META_KEYS.deviceId),
       db.getMeta<string>(META_KEYS.displayName),
+      db.getMeta<boolean>(META_KEYS.shareDisplayName),
       db.getMeta<string>(META_KEYS.lastSyncAt),
       db.getMeta<number>(META_KEYS.clockSkewSeconds),
     ]);
-    return { deviceId, displayName, lastSync, skew };
+    // A name the farmer opted out of sharing (or cleared) is not shown as "the farmer".
+    const shownName = share === false || !displayName?.trim() ? null : displayName.trim();
+    return { deviceId, displayName: shownName, lastSync, skew };
   }, []);
 
   const rows: Array<[string, string]> = [

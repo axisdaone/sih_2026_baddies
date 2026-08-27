@@ -3,7 +3,7 @@ from __future__ import annotations
 from pydantic import Field
 
 from app.enums import ReadingSource
-from app.schemas.common import ApiModel, UtcDatetime, UuidStr
+from app.schemas.common import MAX_CLIENT_SEQ, ApiModel, UtcDatetime, UuidStr
 
 
 class ReadingCreate(ApiModel):
@@ -15,7 +15,7 @@ class ReadingCreate(ApiModel):
     taken_at: UtcDatetime
     source: ReadingSource
     geohash: str | None = Field(default=None, max_length=12)
-    client_seq: int = Field(ge=0)
+    client_seq: int = Field(ge=0, le=MAX_CLIENT_SEQ)
 
 
 class ReadingOut(ReadingCreate):

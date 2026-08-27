@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import i18n from '../i18n';
 import manifestFile from '../../public/audio/manifest.json';
@@ -146,6 +148,16 @@ describe('public/audio/manifest.json', () => {
       seen.add(id);
       expect(clip.path).toBe(`/audio/${clip.locale}/${clip.key}.mp3`);
       expect(['ready', 'missing']).toContain(clip.status);
+    }
+  });
+
+  it('never marks a clip "ready" without a real file behind it (a 404 would silently fall back to TTS)', () => {
+    const audioDir = path.resolve(__dirname, '../../public/audio');
+    for (const clip of (manifestFile as AudioManifest).clips) {
+      if (clip.status !== 'ready') continue;
+      const file = path.join(audioDir, clip.locale, `${clip.key}.mp3`);
+      expect(fs.existsSync(file), `${clip.locale}/${clip.key} listed ready but ${file} is missing`).toBe(true);
+      expect(fs.statSync(file).size, `${clip.locale}/${clip.key} is too small to be a real clip`).toBeGreaterThan(1024);
     }
   });
 

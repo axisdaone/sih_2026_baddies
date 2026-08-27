@@ -79,11 +79,13 @@ export interface TemperatureSegment {
 
 export interface ThresholdBreach {
   type: HardThresholdType;
-  /** The reading temperature that breached the threshold. */
+  /** The hard threshold's `value_c` that was crossed (not the reading's temperature) — same as Python. */
   value_c: number;
+  /** The first reading (time order) that crossed it. */
   reading_id: string;
   at: string;
-  label?: string;
+  /** The hard threshold's `label` (e.g. "heat_damage", "freeze"); null when the protocol has none. */
+  label: string | null;
 }
 
 export interface ShelfLifeEstimate {
@@ -196,19 +198,33 @@ export interface MandiCandidate {
   distance_km: number;
   travel_hours: number;
   feasible: boolean;
-  modal_price_per_quintal: number;
-  price_reported_on: string;
-  price_fetched_at: string;
+  /** Reachable even under the pessimistic (low) shelf-life scenario × safety factor. */
+  feasible_pessimistic?: boolean;
+  /** null when the candidate has no price (schemas/recommendation.py). */
+  modal_price_per_quintal: number | null;
+  /** ISO date (YYYY-MM-DD); null when the candidate has no price (schemas/recommendation.py). */
+  price_reported_on: string | null;
+  price_fetched_at: string | null;
+  /** Whole days between the Agmarknet arrival date and the recommendation date. */
+  price_age_days?: number | null;
   price_is_stale: boolean;
   price_source: PriceSource | string;
+  /** Explanation inputs so the "why" screen can reproduce every number by hand. */
+  qty_kg?: number;
   transit_temp_c: number;
+  transit_rate?: number;
+  reference_shelf_life_hours?: number;
+  /** Shelf-life fraction consumed during the trip alone (consumed_at_arrival − consumed_now). */
+  trip_consumed_fraction?: number;
   consumed_at_arrival: number;
   spoilage_at_arrival: number;
   gross_value_inr: number;
   transport_cost_inr: number;
   expected_value_inr: number;
-  /** e.g. "too_far_for_shelf_life", "no_price" */
+  /** Explanation codes, e.g. "highest_expected_value", "price_stale", "risky_in_pessimistic_case" */
   reasons: string[];
+  /** Rejection code, e.g. "too_far_for_shelf_life", "negative_expected_value", "no_price" */
+  reason?: string | null;
 }
 
 export interface RoutingConstants {
@@ -228,6 +244,8 @@ export interface Recommendation {
   alternatives: MandiCandidate[];
   nearest: MandiCandidate | null;
   rejected: MandiCandidate[];
+  /** Every feasible mandi in rank order (top, alternatives, then the rest). Older cached payloads may omit it. */
+  ranked?: MandiCandidate[];
   uplift_vs_nearest_pct: number | null;
   /** e.g. "batch_spoiled" when top is null */
   reason?: string;
@@ -257,31 +275,105 @@ export interface HealthResponse {
   prices: { source: PriceSource | string; fetched_at: string | null; stale: boolean };
 }
 
-/** GET /quality-pass/{id}/verify?head= */
+/**
+ * GET /quality-pass/{id}/verify[?head=] — mirrors services/api/app/schemas/quality_pass.py
+ * (QualityPassVerify). The on-device verifier (engine/hashchain) returns the same shape.
+ */
 export interface ChainVerifyResponse {
+  /** Chain internally consistent (every hash recomputes). */
   valid: boolean;
-  chain_head: string;
+  /** Recomputed head; differs from the stored one when tampered. null for an empty chain. */
+  chain_head: string | null;
   length: number;
   first_bad_seq: number | null;
+  /**
+   * true when the caller's `head` (>= 16 hex, from the QR) is a prefix of chain_head.
+   * false when no head was supplied (chain checked, QR head not checked). Absent from the local verifier.
+   */
+  head_matches?: boolean;
+}
+
+/** One timeline row on the public page; `hash` is a 12-hex display prefix (PassReading). */
+export interface PassReading {
+  seq: number;
+  temp_c: number;
+  taken_at: string;
+  source: ReadingSource;
+  hash: string;
 }
 
 /**
- * GET /quality-pass/{id} public payload. No farmer identity beyond an opted-in display name.
- * PHASE2: align optional fields with the backend router once quality_pass.py lands.
+ * GET /quality-pass/{id} public payload — mirrors services/api/app/schemas/quality_pass.py
+ * (QualityPassPayload) field for field. No farmer identity beyond an opted-in display name and
+ * no exact origin (geohash precision 4 + a coarse region label).
  */
 export interface QualityPassPayload {
   batch_id: string;
-  crop: Crop;
+  crop: Crop | string;
   protocol_id: string;
+  protocol_name: string;
   qty_kg: number;
   harvested_at: string;
   status: BatchStatus;
-  origin_district?: string | null;
-  display_name?: string | null;
-  readings: Reading[];
-  shelf_life: ShelfLifeEstimate;
+  /** Precision-4 cell (~20 km), never the exact origin. */
+  origin_geohash: string | null;
+  /** Coarse label ("Dharmapuri belt") or null. */
+  region: string | null;
+  display_name: string | null;
+  readings: PassReading[];
+  shelf_life: ShelfLifeEstimate | null;
   chain_head: string | null;
-  verify_url?: string;
+  chain_length: number;
+  /** Recomputed from the stored readings on every request. */
+  chain_valid: boolean;
+  generated_at: string;
+  /** Any reading with source "sim" — the UI shows the SIMULATED chip. */
+  simulated: boolean;
+  /** `{PUBLIC_BASE_URL}/pass/{id}?h={chain_head[:16]}` (no `?h` while the chain is empty). */
+  pass_url: string;
+  verify_url: string;
+}
+
+/** One side of the demo loss comparison (data/demo_scenarios/demo_seed.json → loss_comparison). */
+export interface LossComparisonSide {
+  label: string;
+  scenario: string;
+  evaluate_at_offset_hours: number;
+  mandi_id: string;
+  explanation: string;
+  /** Shelf-life fraction consumed at sale, percent (e.g. 18.3). */
+  expected_loss_pct: number;
+  expected_value_inr: number;
+}
+
+/** The "18 % → 7 %" pitch comparison, computed by the engine over simulated readings. */
+export interface LossComparison {
+  title: string;
+  crop: string;
+  qty_kg: number;
+  baseline: LossComparisonSide;
+  farmsignal: LossComparisonSide;
+  honesty_note: string;
+}
+
+/** POST /demo/seed — mirrors services/api/app/schemas/demo.py (DemoSeedResponse). */
+export interface DemoSeedResponse {
+  farmer_id: string;
+  /** "demo-device-001" */
+  device_id: string;
+  display_name: string | null;
+  token: string;
+  batch_ids: string[];
+  /** true when this call created at least one batch (false on an idempotent replay). */
+  created: boolean;
+  batches_created: number;
+  batches_existing: number;
+  readings_created: number;
+  /** Passed through verbatim from demo_seed.json; optional because older servers / mocks omit it. */
+  loss_comparison?: LossComparison;
+  /** F6 view of the seeded batches. */
+  alerts: BatchAlert[];
+  /** Every seeded reading is `source: "sim"`; the UI must label it. */
   simulated: boolean;
 }
 
@@ -371,6 +463,19 @@ export interface SyncOpResult {
   clock_adjusted?: boolean;
 }
 
+/** A shelf-life threshold crossing (PRD F6). `message_key` doubles as the voice-clip key. */
+export interface AlertEvent {
+  /** null for the `sell_now` event */
+  threshold: AlertThreshold | null;
+  status: ShelfLifeStatus;
+  /** alert_75 | alert_50 | alert_25 | sell_now */
+  message_key: string;
+}
+
+export interface BatchAlert extends AlertEvent {
+  batch_id: string;
+}
+
 export interface SyncResponse {
   server_now: string;
   /** client_now − server_now, seconds */
@@ -378,6 +483,8 @@ export interface SyncResponse {
   results: SyncOpResult[];
   /** Full Batch[] for this farmer, with shelf_life. */
   batches: Batch[];
+  /** Server-side view of F6 for every open batch of this farmer (computed from `batches`). */
+  alerts?: BatchAlert[];
 }
 
 // ---------------------------------------------------------------------------

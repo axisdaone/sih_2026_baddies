@@ -14,7 +14,9 @@ from app.models.types import TZDateTime
 
 config = context.config
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    # disable_existing_loggers=False: the API runs `upgrade` in-process at startup and must
+    # keep its own (app.*, uvicorn.*) loggers alive afterwards.
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 config.set_main_option("sqlalchemy.url", get_settings().DATABASE_URL)
 target_metadata = Base.metadata

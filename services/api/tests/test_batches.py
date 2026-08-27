@@ -42,7 +42,9 @@ def _assert_range(shelf_life: dict[str, Any]) -> None:
 
 @pytest.fixture(scope="module")
 def other_headers(client: TestClient) -> dict[str, str]:
-    response = client.post(f"{API}/auth/device", json={"device_id": "test-device-0002"})
+    response = client.post(
+        f"{API}/auth/device", json={"device_id": "0f3c1a2b-5d6e-4f70-8a9b-0c1d2e3f4a04"}
+    )
     assert response.status_code == 200, response.text
     return {"Authorization": f"Bearer {response.json()['token']}"}
 
@@ -99,6 +101,7 @@ def test_cross_farmer_isolation(
     # Same id from another farmer is a conflict, not a silent takeover.
     stolen = client.post(f"{API}/batches", json=body, headers=other_headers)
     assert stolen.status_code == 409
+    assert stolen.json()["detail"] == "id already in use"  # same wording as the reading branch
 
     # Reads/patches by the other farmer look like a missing batch (no id leakage).
     assert client.get(f"{API}/batches/{body['id']}", headers=other_headers).status_code == 404
@@ -194,6 +197,8 @@ def test_simulate_hot_afternoon_is_idempotent(
     assert client.post(f"{API}/batches", json=body, headers=auth_headers).status_code == 201
     url = f"{API}/batches/{body['id']}/simulate"
 
+    # No up_to_hours: the window defaults to "hours since harvest" (9 h), so the whole 8 h
+    # profile fits without dating any reading in the future.
     first = client.post(url, params={"profile": "hot_afternoon"}, headers=auth_headers)
     assert first.status_code == 200, first.text
     data = first.json()
@@ -243,6 +248,53 @@ def test_simulate_up_to_hours_continues_the_profile(
     assert full.json()["shelf_life"]["protocol_id"] == "guava"
 
 
+def test_simulate_defaults_to_hours_since_harvest(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    """A freshly harvested batch must not get future readings appended to its chain."""
+    body = _batch_body(harvested_hours_ago=2.5)
+    assert client.post(f"{API}/batches", json=body, headers=auth_headers).status_code == 201
+    url = f"{API}/batches/{body['id']}/simulate"
+
+    partial = client.post(url, params={"profile": "hot_afternoon"}, headers=auth_headers)
+    assert partial.status_code == 200, partial.text
+    readings = partial.json()["readings"]
+    assert len(readings) == 3  # offsets 0, 1, 2 (<= 2.5 h since harvest)
+    now = datetime.now(UTC)
+    for reading in readings:
+        taken = datetime.fromisoformat(reading["taken_at"].replace("Z", "+00:00"))
+        assert taken <= now
+    shelf = partial.json()["shelf_life"]
+    assert shelf["current_temp_c"] == 36.5  # the offset-2 reading, not a future one
+    assert shelf["confidence"] == "high"  # 3 readings, last one 0.5 h old
+    _assert_range(shelf)
+
+    # Replaying with the default window is a no-op (same ids, same hashes).
+    again = client.post(url, params={"profile": "hot_afternoon"}, headers=auth_headers)
+    assert [r["hash"] for r in again.json()["readings"]] == [r["hash"] for r in readings]
+
+    # An explicit window still wins over the clock, and ?all=true appends the whole profile.
+    four = client.post(
+        url, params={"profile": "hot_afternoon", "up_to_hours": 4}, headers=auth_headers
+    )
+    assert len(four.json()["readings"]) == 5
+    full = client.post(
+        url, params={"profile": "hot_afternoon", "all": "true"}, headers=auth_headers
+    )
+    assert full.status_code == 200, full.text
+    assert [r["seq"] for r in full.json()["readings"]] == list(range(1, 9))
+    assert full.json()["readings"][:3] == readings  # chain extended in place
+    # `all` overrides `up_to_hours` and is itself idempotent.
+    both = client.post(
+        url,
+        params={"profile": "hot_afternoon", "up_to_hours": 1, "all": "true"},
+        headers=auth_headers,
+    )
+    assert len(both.json()["readings"]) == 8
+    listed = client.get(f"{API}/batches/{body['id']}/readings", headers=auth_headers).json()
+    assert listed == full.json()["readings"]
+
+
 def test_simulate_unknown_profile(client: TestClient, auth_headers: dict[str, str]) -> None:
     body = _batch_body()
     assert client.post(f"{API}/batches", json=body, headers=auth_headers).status_code == 201
@@ -282,3 +334,81 @@ def test_geohash_reference_vectors() -> None:
         geohash_encode(91, 0)
     with pytest.raises(ValueError):
         geohash_encode(0, 181)
+
+
+def test_simulate_is_403_when_demo_mode_is_off(
+    client: TestClient, auth_headers: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from app.config import get_settings
+
+    body = _batch_body()
+    assert client.post(f"{API}/batches", json=body, headers=auth_headers).status_code == 201
+    monkeypatch.setattr(get_settings(), "DEMO_MODE", False)
+    url = f"{API}/batches/{body['id']}/simulate"
+    response = client.post(url, params={"profile": "reefer_van"}, headers=auth_headers)
+    assert response.status_code == 403, response.text
+    # The rest of the batch API is unaffected by DEMO_MODE.
+    assert client.get(f"{API}/batches/{body['id']}", headers=auth_headers).status_code == 200
+
+
+def test_client_seq_is_bounded_to_32_bits(client: TestClient, auth_headers: dict[str, str]) -> None:
+    body = _batch_body()
+    assert client.post(f"{API}/batches", json=body, headers=auth_headers).status_code == 201
+    too_big = client.post(
+        f"{API}/batches", json=_batch_body(client_seq=2**31), headers=auth_headers
+    )
+    assert too_big.status_code == 422
+    url = f"{API}/batches/{body['id']}"
+    patch = client.patch(url, json={"notes": "x", "client_seq": 2**31}, headers=auth_headers)
+    assert patch.status_code == 422
+    max_ok = client.patch(url, json={"notes": "x", "client_seq": 2**31 - 1}, headers=auth_headers)
+    assert max_ok.status_code == 200
+
+
+def test_unknown_profile_detail_does_not_list_profiles(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    body = _batch_body()
+    assert client.post(f"{API}/batches", json=body, headers=auth_headers).status_code == 201
+    url = f"{API}/batches/{body['id']}/simulate"
+    response = client.post(url, params={"profile": "cool_chain"}, headers=auth_headers)
+    assert response.status_code == 404
+    assert "known:" not in response.json()["detail"]
+    assert "hot_afternoon" not in response.json()["detail"]
+
+
+def test_sim_reading_ids_are_owner_scoped(
+    client: TestClient, auth_headers: dict[str, str], other_headers: dict[str, str]
+) -> None:
+    """A stranger who knows the (public) batch id cannot precompute and squat the sim ids."""
+    from app.services.simulate import sim_reading_id
+
+    body = _batch_body(harvested_hours_ago=9)
+    assert client.post(f"{API}/batches", json=body, headers=auth_headers).status_code == 201
+    mine = client.get(f"{API}/auth/me", headers=auth_headers).json()["id"]
+    theirs = client.get(f"{API}/auth/me", headers=other_headers).json()["id"]
+
+    class Stub:
+        def __init__(self, farmer_id: str) -> None:
+            self.id = body["id"]
+            self.farmer_id = farmer_id
+
+    guess = sim_reading_id(Stub(theirs), "hot_afternoon", 0)  # type: ignore[arg-type]
+    real = sim_reading_id(Stub(mine), "hot_afternoon", 0)  # type: ignore[arg-type]
+    assert guess != real
+    # The stranger appends the guessed id to their own batch ...
+    theirs_batch = _batch_body()
+    created = client.post(f"{API}/batches", json=theirs_batch, headers=other_headers)
+    assert created.status_code == 201
+    squat = {
+        "id": guess, "batch_id": theirs_batch["id"], "temp_c": 20.0,
+        "taken_at": theirs_batch["harvested_at"], "source": "manual", "client_seq": 1,
+    }
+    assert client.post(
+        f"{API}/batches/{theirs_batch['id']}/readings", json=squat, headers=other_headers
+    ).status_code == 201
+    # ... and the owner's simulation still works because the real ids differ.
+    url = f"{API}/batches/{body['id']}/simulate"
+    sim = client.post(url, params={"profile": "hot_afternoon"}, headers=auth_headers)
+    assert sim.status_code == 200, sim.text
+    assert sim.json()["readings"][0]["id"] == real
