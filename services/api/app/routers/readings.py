@@ -1,24 +1,32 @@
-"""Readings: append-only, hash-chained (contract section 4). Bodies: PHASE2."""
+"""Readings: append-only, hash-chained (contract section 4)."""
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Response
 
 from app.deps import CurrentFarmer, DbDep
 from app.schemas import ReadingCreate, ReadingOut
+from app.services.batches import get_batch_for_farmer
+from app.services.readings import append_reading as _append_reading
+from app.services.readings import list_readings as _list_readings
 
 router = APIRouter(prefix="/batches/{batch_id}/readings", tags=["readings"])
 
 
 @router.post("", response_model=ReadingOut, status_code=201)
 def append_reading(
-    batch_id: str, body: ReadingCreate, farmer: CurrentFarmer, db: DbDep
+    batch_id: str, body: ReadingCreate, farmer: CurrentFarmer, db: DbDep, response: Response
 ) -> ReadingOut:
     """Idempotent on client `id`; assigns seq/hash/prev_hash; returns 200 on duplicate."""
-    raise HTTPException(501, "PHASE2")
+    batch = get_batch_for_farmer(db, farmer, batch_id)
+    reading, created = _append_reading(db, batch, body)
+    if not created:
+        response.status_code = 200
+    return ReadingOut.model_validate(reading)
 
 
 @router.get("", response_model=list[ReadingOut])
 def list_readings(batch_id: str, farmer: CurrentFarmer, db: DbDep) -> list[ReadingOut]:
     """Ordered by seq ascending."""
-    raise HTTPException(501, "PHASE2")
+    batch = get_batch_for_farmer(db, farmer, batch_id)
+    return [ReadingOut.model_validate(r) for r in _list_readings(db, batch)]

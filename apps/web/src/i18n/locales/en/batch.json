@@ -1,1 +1,216 @@
-{}
+{
+  "crops": {
+    "tomato": "Tomato",
+    "guava": "Guava"
+  },
+  "status": {
+    "fresh": "Fresh",
+    "warning": "Warning",
+    "critical": "Critical",
+    "spoiled": "Spoiled"
+  },
+  "batch_status": {
+    "open": "Open",
+    "sold": "Sold",
+    "spoiled": "Spoiled",
+    "discarded": "Discarded"
+  },
+  "confidence": {
+    "high": "High confidence",
+    "medium": "Medium confidence",
+    "low": "Low confidence"
+  },
+  "breach": {
+    "heat_damage": "heat damage",
+    "freeze": "freezing",
+    "heat_excursion": "heat excursion",
+    "max_temp": "too hot",
+    "min_temp": "too cold"
+  },
+  "source": {
+    "manual": "Manual",
+    "sim": "SIMULATED",
+    "ble": "BLE tag"
+  },
+  "price_source": {
+    "agmarknet_live": "Agmarknet (live)",
+    "agmarknet_cache": "Agmarknet (cached)",
+    "bundled_snapshot": "Bundled snapshot"
+  },
+  "reasons": {
+    "highest_expected_value": "Highest expected value",
+    "closest": "Closest mandi",
+    "price_stale": "Price is stale (older than 30 h)",
+    "infeasible_travel_time": "Travel time exceeds remaining shelf life",
+    "too_far_for_shelf_life": "Too far for the remaining shelf life",
+    "no_price": "No price available for this crop",
+    "origin_assumed": "Batch location was assumed",
+    "batch_spoiled": "Batch is spoiled — no mandi is worth the trip",
+    "no_feasible_mandi": "No mandi can be reached in time",
+    "feasible": "Reachable in time"
+  },
+  "home": {
+    "empty_title": "No batches yet",
+    "empty_body": "Log your harvest and see how long it will stay fresh.",
+    "log_harvest": "Log harvest",
+    "demo_hint": "Want to see it in action?",
+    "demo_link": "Load demo data in Settings",
+    "open_count": "{{count}} open",
+    "open_list": "Open batches",
+    "closed": "Closed batches ({{count}})"
+  },
+  "card": {
+    "aria": "{{crop}}, {{qty}}",
+    "harvested": "Harvested {{time}}",
+    "unsynced": "Not yet synced",
+    "estimating": "Estimating shelf life…"
+  },
+  "countdown": {
+    "aria": "Shelf life countdown",
+    "most_likely": "Most likely",
+    "band_aria": "Range from {{low}} to {{high}}",
+    "pessimistic": "worst case",
+    "optimistic": "best case",
+    "remaining_pct": "Shelf life left",
+    "confidence": "Confidence",
+    "expected_end": "Expected end",
+    "current_temp": "Current temp.",
+    "assumed": "assumed",
+    "assumed_note": "Estimate based on an assumed {{temp}} °C — add a temperature reading for a better estimate.",
+    "breach": "Hard threshold breached ({{label}} at {{temp}} °C) — the batch is spoiled.",
+    "from_server": "Last value from the server; the on-device estimate is unavailable."
+  },
+  "readings": {
+    "title": "Temperature readings",
+    "empty": "No readings yet. Add one at every handoff (loading, transport, arrival).",
+    "unsynced": "not yet synced"
+  },
+  "reading": {
+    "add_title": "Add temperature reading",
+    "temp_label": "Temperature",
+    "quick": "Quick values",
+    "invalid": "Enter a temperature between {{min}} and {{max}} °C",
+    "save": "Save reading"
+  },
+  "pad": {
+    "aria": "Number pad",
+    "negative": "Plus / minus",
+    "decimal": "Decimal point",
+    "backspace": "Delete"
+  },
+  "stepper": {
+    "decrease": "Decrease by {{step}}",
+    "increase": "Increase by {{step}}"
+  },
+  "new": {
+    "crop": "Crop",
+    "qty": "Quantity",
+    "harvest_time": "Harvest time",
+    "quick_now": "Now",
+    "quick_1h": "1 h ago",
+    "quick_morning": "This morning",
+    "custom_time": "Pick time",
+    "location": "Location",
+    "locating": "Finding your location…",
+    "location_ok": "GPS: {{lat}}, {{lon}}",
+    "location_unavailable": "Location unavailable",
+    "location_fallback": "using {{label}}",
+    "origin_note": "Location assumed: {{label}}",
+    "retry_gps": "Retry GPS",
+    "first_reading": "First temperature (optional)",
+    "first_reading_hint": "Tap a value or enter your own. You can add more readings later.",
+    "other_temp": "Other…",
+    "skip_reading": "Clear",
+    "notes": "Notes (optional)",
+    "save": "Save batch",
+    "select_crop_first": "Choose a crop first"
+  },
+  "detail": {
+    "harvested": "Harvested {{time}}",
+    "origin_assumed": "Location was not recorded for this batch.",
+    "no_estimate": "Shelf-life estimate unavailable.",
+    "closed_note": "This batch is {{status}}. Readings are kept for the Quality Pass.",
+    "add_reading": "Add reading",
+    "quality_pass": "Quality Pass",
+    "close_batch": "Finish batch",
+    "mark_sold": "Mark as sold",
+    "discard": "Discard",
+    "confirm_sold": "Mark this batch as sold? It will move out of the open list.",
+    "confirm_discard": "Discard this batch? It will be marked as not sold.",
+    "not_found": "This batch is not on this device."
+  },
+  "sim": {
+    "title": "Simulated telemetry",
+    "intro": "Replay a demo temperature profile as SIMULATED readings — for demos only, never real sensor data.",
+    "scenario": "Scenario",
+    "steps": "Profile steps",
+    "future_step": "Still in the future for this batch",
+    "only_past": "This batch was harvested {{hours}} ago, so only profile steps up to that offset can be played — the engine ignores readings from the future.",
+    "play_next": "Play next step",
+    "play_all": "Play all ({{count}})"
+  },
+  "scenarios": {
+    "cool_morning": "Cool morning (good practice)",
+    "hot_afternoon": "Hot afternoon (status quo)",
+    "heat_spike": "Heat spike (tarpaulin / closed van)",
+    "reefer_van": "Reefer van (unbroken cold chain)",
+    "pre_cooled": "Pre-cooled (best practice)",
+    "pharma_excursion": "Pharma 2–8 °C excursion",
+    "pharma_freeze": "Pharma freeze breach"
+  },
+  "rec": {
+    "title": "Where to sell",
+    "loading": "Getting recommendation…",
+    "unavailable": "No recommendation yet — sync and try again.",
+    "offline_no_cache": "Offline — the recommendation will appear once you are connected.",
+    "sell_at": "Sell at",
+    "distance": "Distance · travel",
+    "price": "Modal price",
+    "stale": "stale",
+    "expected_value": "Expected value",
+    "uplift": "vs nearest ({{mandi}})",
+    "nearest_label": "Nearest",
+    "is_nearest": "This is the nearest mandi",
+    "cached_at": "Cached {{time}}",
+    "computed_at": "Computed {{time}}",
+    "price_source": "Prices: {{source}}",
+    "why": "Why?",
+    "refresh": "Refresh"
+  },
+  "why": {
+    "back_to_batch": "Back to batch",
+    "no_data": "No recommendation has been fetched for this batch yet. Open the batch while online.",
+    "intro": "Each mandi is scored on today's price, how far it is, and how much of the batch would spoil on the way.",
+    "shelf_life_used": "Shelf life used: {{range}}",
+    "simulated_note": "This recommendation uses simulated readings.",
+    "mandi": "Mandi",
+    "price": "Price (₹/quintal)",
+    "reported_on": "reported {{date}}",
+    "distance": "Distance",
+    "travel": "≈ {{hours}} travel",
+    "straight": "{{km}} km straight line",
+    "spoilage_at_arrival": "Spoilage at arrival",
+    "transit_temp": "at {{temp}} °C in transit",
+    "transport_cost": "Transport cost",
+    "expected_value": "Expected value",
+    "gross_value": "gross {{value}}",
+    "verdict": "Verdict",
+    "feasible": "Reachable in time",
+    "infeasible": "Rejected",
+    "role_top": "Recommended",
+    "role_alternative": "Alternative",
+    "role_nearest": "Nearest",
+    "role_rejected": "Rejected",
+    "constants": "Constants used",
+    "road_factor": "Road factor",
+    "avg_speed": "Average speed",
+    "safety_factor": "Safety factor",
+    "cost_per_km": "Transport cost",
+    "formula_title": "How the score is computed",
+    "formula_distance": "Road distance = straight-line distance × {{factor}}; travel time = road distance ÷ {{speed}} km/h.",
+    "formula_feasible": "A mandi is reachable only if travel time is under the most-likely remaining shelf life × {{safety}}.",
+    "formula_spoilage": "Spoilage at arrival = shelf life already used + what the trip uses at the transit temperature (value loss is assumed linear).",
+    "formula_value": "Expected value = price per kg × quantity × (1 − spoilage at arrival) − road distance × {{cost}} per km.",
+    "formula_rank": "Reachable mandis are ranked by expected value; the best is recommended, the next two are alternatives."
+  }
+}

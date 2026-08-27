@@ -1,0 +1,48 @@
+{
+  "id": "cool_morning",
+  "name": "Cool morning harvest",
+  "description": "Harvest at 06:00 in a cool field (22 C) that warms steadily to 33 C by 14:00. The typical good-practice day in the Dharmapuri belt.",
+  "suitable_protocols": [
+    "tomato",
+    "guava"
+  ],
+  "readings": [
+    {
+      "offset_hours": 0,
+      "temp_c": 22
+    },
+    {
+      "offset_hours": 1,
+      "temp_c": 23
+    },
+    {
+      "offset_hours": 2,
+      "temp_c": 24.5
+    },
+    {
+      "offset_hours": 3,
+      "temp_c": 26
+    },
+    {
+      "offset_hours": 4,
+      "temp_c": 28
+    },
+    {
+      "offset_hours": 5,
+      "temp_c": 30
+    },
+    {
+      "offset_hours": 6,
+      "temp_c": 31.5
+    },
+    {
+      "offset_hours": 7,
+      "temp_c": 32.5
+    },
+    {
+      "offset_hours": 8,
+      "temp_c": 33
+    }
+  ],
+  "expected_story": "Slow early decay: after 8 h a tomato batch has consumed ~11% of shelf life and stays 'fresh'; confidence is 'high' while readings keep coming. Best case for selling far (Hosur/Bengaluru)."
+}

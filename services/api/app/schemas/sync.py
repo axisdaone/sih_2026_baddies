@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import Field
 
-from app.enums import SyncOpKind, SyncOpStatus
+from app.enums import ShelfLifeStatus, SyncOpKind, SyncOpStatus
 from app.schemas.batch import BatchOut
 from app.schemas.common import ApiModel, UtcDatetime, UuidStr
 from app.schemas.reading import ReadingOut
@@ -32,8 +32,22 @@ class SyncResult(ApiModel):
     clock_adjusted: bool = False
 
 
+class AlertEvent(ApiModel):
+    """A shelf-life threshold crossing (PRD F6). `message_key` doubles as the voice-clip key."""
+
+    threshold: Literal[75, 50, 25] | None  # None for the `sell_now` event
+    status: ShelfLifeStatus
+    message_key: str  # alert_75 | alert_50 | alert_25 | sell_now
+
+
+class BatchAlert(AlertEvent):
+    batch_id: str
+
+
 class SyncResponse(ApiModel):
     server_now: UtcDatetime
     clock_skew_seconds: float
     results: list[SyncResult] = []
     batches: list[BatchOut] = []
+    # Server-side view of F6 for every open batch of this farmer (computed from `batches`).
+    alerts: list[BatchAlert] = []

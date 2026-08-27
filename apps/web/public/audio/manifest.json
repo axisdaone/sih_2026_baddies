@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "note": "Pre-recorded voice prompts (contract 9). Drop <locale>/<key>.mp3 into public/audio/ and flip status to \"ready\". voice/play() falls back to speechSynthesis (labelled) when a clip is missing.",
+  "note": "Pre-recorded voice prompts (contract 9). 7 keys x 3 locales = 21 clips at /audio/<locale>/<key>.mp3 (mp3, mono, 32 kbps). Drop a file in and flip its status to \"ready\"; voice/play() falls back to speechSynthesis (labelled TTS) when a clip is missing. Recording script + format: public/audio/README.md.",
   "keys": [
     "welcome",
     "batch_logged",
@@ -142,5 +142,12 @@
       "path": "/audio/ta/recommendation_ready.mp3",
       "status": "missing"
     }
-  ]
+  ],
+  "format": {
+    "container": "mp3",
+    "channels": 1,
+    "bitrate_kbps": 32,
+    "sample_rate_hz": 22050,
+    "script": "README.md"
+  }
 }

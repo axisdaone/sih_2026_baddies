@@ -58,7 +58,7 @@ export function terminateKineticsWorker(): void {
 
 /**
  * Evaluate shelf life off the main thread. `input.now` defaults to the current time.
- * PHASE2: the engine agent implements engine/evaluate; until then this rejects with "PHASE2".
+ * Without a Worker global (tests, very old browsers) it evaluates inline and still returns a Promise.
  */
 export async function estimateShelfLife(
   input: Omit<KineticsInput, 'now'> & { now?: string },

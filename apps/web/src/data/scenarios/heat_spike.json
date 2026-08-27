@@ -1,0 +1,44 @@
+{
+  "id": "heat_spike",
+  "name": "Heat spike (tarpaulin / closed van)",
+  "description": "30 C baseline with a 2 h spike to 42 C at hour 3 (e.g. under a tarpaulin or in a closed van), then back to 30 C. 42 C is below the 45 C hard threshold.",
+  "suitable_protocols": [
+    "tomato",
+    "guava"
+  ],
+  "readings": [
+    {
+      "offset_hours": 0,
+      "temp_c": 30
+    },
+    {
+      "offset_hours": 1,
+      "temp_c": 30
+    },
+    {
+      "offset_hours": 2,
+      "temp_c": 30
+    },
+    {
+      "offset_hours": 3,
+      "temp_c": 42
+    },
+    {
+      "offset_hours": 4,
+      "temp_c": 42
+    },
+    {
+      "offset_hours": 5,
+      "temp_c": 30
+    },
+    {
+      "offset_hours": 6,
+      "temp_c": 30
+    },
+    {
+      "offset_hours": 8,
+      "temp_c": 30
+    }
+  ],
+  "expected_story": "No hard breach (42 C < 45 C) but each spike hour counts for ~2.3x the decay of a 30 C hour under the Q10 law; status stays 'fresh' at hour 8 while the thermal-load number jumps. Shows the engine accelerating on spikes without over-reacting."
+}

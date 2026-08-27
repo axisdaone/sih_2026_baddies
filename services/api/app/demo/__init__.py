@@ -1,1 +1,1 @@
-"""app.demo package placeholder. PHASE2: feature agent fills in this package."""
+"""Demo tooling: `seed` loads data/demo_scenarios/demo_seed.json (POST /demo/seed)."""

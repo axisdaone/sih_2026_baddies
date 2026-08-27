@@ -17,6 +17,7 @@ class PriceMeta(ApiModel):
 
 class MandiPriceOut(ApiModel):
     mandi_id: str
+    mandi_name: str | None = None
     commodity: str
     variety: str | None = None
     modal_price: float  # INR per quintal
@@ -34,6 +35,11 @@ class PricesResponse(PriceMeta):
 
 
 class PriceRefreshResponse(PriceMeta):
+    """POST /prices/refresh outcome. status: live ok / failed (snapshot fallback) / skipped."""
+
     status: Literal["ok", "failed", "skipped"]
-    rows: int = 0
+    rows: int = 0  # inserted + updated
+    fetched: int = 0  # records parsed and mapped from the live API
+    inserted: int = 0
+    updated: int = 0
     error: str | None = None

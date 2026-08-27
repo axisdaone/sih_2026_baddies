@@ -1,0 +1,40 @@
+{
+  "id": "reefer_van",
+  "name": "Reefer van pickup",
+  "description": "1 h at 30 C ambient, then loaded into a 12 C reefer van for 10 h.",
+  "suitable_protocols": [
+    "tomato",
+    "guava"
+  ],
+  "readings": [
+    {
+      "offset_hours": 0,
+      "temp_c": 30
+    },
+    {
+      "offset_hours": 1,
+      "temp_c": 12
+    },
+    {
+      "offset_hours": 3,
+      "temp_c": 12
+    },
+    {
+      "offset_hours": 5,
+      "temp_c": 12
+    },
+    {
+      "offset_hours": 7,
+      "temp_c": 12
+    },
+    {
+      "offset_hours": 9,
+      "temp_c": 12
+    },
+    {
+      "offset_hours": 11,
+      "temp_c": 12
+    }
+  ],
+  "expected_story": "Cold chain works: 10 h at 12 C costs about the same shelf life as 3 h at 30 C. After 11 h the tomato batch has consumed only ~5% and the Quality Pass shows an unbroken cold chain."
+}

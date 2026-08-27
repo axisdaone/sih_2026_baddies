@@ -1,1 +1,69 @@
-{}
+{
+  "language": { "title": "Language", "hint": "Pick your language" },
+  "numerals": {
+    "title": "Native numerals",
+    "desc": "Show numbers in Devanagari / Tamil digits.",
+    "preview": "Preview: {{sample}}"
+  },
+  "voice": {
+    "title": "Voice",
+    "test": "Test voice",
+    "mute": "Mute voice prompts",
+    "clips": "{{ready}} of {{total}} clips recorded for {{lang}}",
+    "clips_ready": "Pre-recorded clips",
+    "tts": "Using computer voice (TTS fallback)",
+    "unavailable": "No voice available on this device",
+    "last_fallback": "Last prompt used the computer voice",
+    "manifest_missing": "Audio manifest not reachable"
+  },
+  "demo": {
+    "title": "Demo",
+    "desc": "Signs this device in as the demo farmer and loads the seeded batches. All demo readings are simulated.",
+    "load": "Use demo identity & load demo data",
+    "loading": "Loading demo…",
+    "loaded": "Demo data loaded",
+    "loaded_body": "Signed in as {{name}} · {{count}} batches (SIMULATED)",
+    "failed": "Could not load demo data",
+    "failed_body": "Is the server reachable? Demo mode must be enabled on the API.",
+    "reset": "Reset local data",
+    "reset_desc": "Deletes every batch, reading and setting on this device, then reloads.",
+    "reset_confirm": "Delete all local data?",
+    "reset_yes": "Yes, delete",
+    "reset_no": "Keep data",
+    "reload": "Reload app",
+    "demo_origin": "Use demo origin when GPS is unavailable",
+    "demo_origin_desc": "{{label}} ({{lat}}, {{lon}})"
+  },
+  "device": {
+    "title": "Device",
+    "device_id": "Device ID",
+    "farmer": "Farmer",
+    "last_sync": "Last sync",
+    "never": "Never",
+    "pending": "Pending changes",
+    "skew": "Clock skew",
+    "skew_value": "{{seconds}} s",
+    "version": "App version",
+    "online": "Online",
+    "offline": "Offline",
+    "unknown": "—"
+  },
+  "install": {
+    "title": "Install",
+    "desc": "Add FarmSignal to your home screen for full-screen, offline use.",
+    "button": "Install app",
+    "installed": "Installed — opens from your home screen.",
+    "manual": "Use your browser menu → \"Add to Home screen\"."
+  },
+  "about": {
+    "title": "About the model",
+    "link": "How the shelf-life estimate works",
+    "p1": "FarmSignal estimates remaining shelf life from temperature history using a Q10 degree-hour model per crop (tomato, guava). It always shows a range — pessimistic to optimistic — because the published parameters are themselves uncertain. The middle value is the most likely, not a promise.",
+    "p2": "Every reading tightens the estimate. With no readings the app assumes the yard temperature from the protocol and says so (confidence: low).",
+    "p3": "Mandi recommendations rank markets by expected value: price × (1 − spoilage on arrival) − transport cost, constrained by remaining shelf life. The \"Why?\" screen shows every input.",
+    "p4": "Simulated readings and demo data are always labelled SIMULATED. Prices come from Agmarknet with a fetch time; stale or bundled prices are marked.",
+    "close": "Close"
+  },
+  "saved": "Saved",
+  "error": "Something went wrong."
+}

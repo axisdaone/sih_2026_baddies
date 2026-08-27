@@ -1,1 +1,22 @@
-{}
+{
+  "region_label": "Notifications",
+  "dismiss": "Dismiss",
+  "open_batch": "Open batch",
+  "a_batch": "A batch",
+  "crop": { "tomato": "Tomato", "guava": "Guava" },
+  "threshold_75": "75 % shelf life left",
+  "threshold_50": "Half the shelf life left",
+  "threshold_25": "Only 25 % shelf life left",
+  "critical_title": "Sell now",
+  "body": "{{crop}} {{qty}} — about {{range}} left",
+  "log": { "title": "Recent alerts", "empty": "No alerts yet." },
+  "voice": {
+    "welcome": "Welcome to FarmSignal. Sell before it spoils.",
+    "batch_logged": "Batch logged. Add a temperature reading to tighten the estimate.",
+    "alert_75": "Attention: this batch has three quarters of its shelf life left.",
+    "alert_50": "Attention: this batch has half of its shelf life left. Plan the sale.",
+    "alert_25": "Warning: only a quarter of the shelf life is left. Sell today.",
+    "sell_now": "Sell now. This batch will not last much longer.",
+    "recommendation_ready": "Your mandi recommendation is ready."
+  }
+}

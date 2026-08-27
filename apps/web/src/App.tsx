@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import { UpdateToastHost } from './components/UpdateToast';
+import { AlertHost } from './alerts/AlertHost';
+import { AppBootstrap } from './components/AppBootstrap';
 
 const Home = lazy(() => import('./pages/Home'));
 const NewBatch = lazy(() => import('./pages/NewBatch'));
@@ -38,9 +40,11 @@ function PageFallback(): JSX.Element {
   );
 }
 
-export default function App(): JSX.Element {
+export default function App({ offlineOnly = false }: { offlineOnly?: boolean } = {}): JSX.Element {
   return (
     <>
+      {/* Device identity + sync loop + pending-ops badge (state/bootstrap). */}
+      <AppBootstrap offlineOnly={offlineOnly} />
       <Suspense fallback={<PageFallback />}>
         <Routes>
           <Route element={<Layout />}>
@@ -60,6 +64,7 @@ export default function App(): JSX.Element {
         </Routes>
       </Suspense>
       <UpdateToastHost />
+      <AlertHost />
     </>
   );
 }

@@ -1,9 +1,17 @@
 /**
  * Typed fetch wrapper for /api/v1. Bearer token from localStorage 'fs.token'; 8 s timeout;
  * throws ApiError for non-2xx, network failures and timeouts (status 0).
+ *
+ * Base URL: `VITE_API_BASE` (build-time env) overrides the default same-origin `/api/v1` — set it to
+ * the full prefix, e.g. `https://api.example.com/api/v1`, when the PWA is hosted apart from the API.
  */
 
-export const API_BASE = '/api/v1';
+function resolveApiBase(): string {
+  const override = (import.meta.env?.VITE_API_BASE as string | undefined)?.trim();
+  return override ? override.replace(/\/+$/, '') : '/api/v1';
+}
+
+export const API_BASE = resolveApiBase();
 export const TOKEN_KEY = 'fs.token';
 export const DEFAULT_TIMEOUT_MS = 8_000;
 

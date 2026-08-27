@@ -1,0 +1,51 @@
+{
+  "id": "pharma_excursion",
+  "name": "2-8 C excursion (recoverable)",
+  "description": "5 C baseline, a 4 h excursion to 15 C (hours 2-6), then back to 5 C. Within the 25 C hard threshold.",
+  "suitable_protocols": [
+    "pharma_2_8"
+  ],
+  "readings": [
+    {
+      "offset_hours": 0,
+      "temp_c": 5
+    },
+    {
+      "offset_hours": 1,
+      "temp_c": 5
+    },
+    {
+      "offset_hours": 2,
+      "temp_c": 15
+    },
+    {
+      "offset_hours": 3,
+      "temp_c": 15
+    },
+    {
+      "offset_hours": 4,
+      "temp_c": 15
+    },
+    {
+      "offset_hours": 5,
+      "temp_c": 15
+    },
+    {
+      "offset_hours": 6,
+      "temp_c": 5
+    },
+    {
+      "offset_hours": 8,
+      "temp_c": 5
+    },
+    {
+      "offset_hours": 10,
+      "temp_c": 5
+    },
+    {
+      "offset_hours": 12,
+      "temp_c": 5
+    }
+  ],
+  "expected_story": "The excursion model counts 4 h outside 2-8 C against a 12 h (720 min) budget: consumed 0.333, 8 h of budget left, status 'fresh', alert 75% crossed. Same integral, different protocol."
+}
