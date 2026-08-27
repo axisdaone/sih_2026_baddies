@@ -1,0 +1,27 @@
+{
+  "id": "pharma_2_8",
+  "kind": "pharma",
+  "name": "Cold-chain pharmaceutical (2-8 C)",
+  "commodity": null,
+  "version": "1.0",
+  "model": "excursion",
+  "reference_temp_c": 5,
+  "reference_shelf_life_hours": 12,
+  "reference_shelf_life_range_hours": [10.8, 13.2],
+  "q10": null,
+  "q10_range": null,
+  "min_effective_temp_c": null,
+  "max_effective_temp_c": null,
+  "default_ambient_c": 25,
+  "hard_thresholds": [
+    { "type": "min_temp", "value_c": 0, "label": "freeze" },
+    { "type": "max_temp", "value_c": 25, "label": "heat_excursion" }
+  ],
+  "band_c": [2, 8],
+  "excursion_budget_minutes": 720,
+  "sources": [
+    "WHO Technical Report Series 961 Annex 9 (2011): storage and transport of time- and temperature-sensitive pharmaceutical products; 2-8 C labelled range.",
+    "USP <1079> Good Storage and Distribution Practices: cumulative excursion (MKT / time-out-of-refrigeration) budgeting.",
+    "Sample budget of 12 h cumulative out-of-range time is illustrative; real products carry a manufacturer-specified stability budget."
+  ]
+}

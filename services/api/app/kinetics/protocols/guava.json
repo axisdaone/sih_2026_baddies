@@ -1,0 +1,27 @@
+{
+  "id": "guava",
+  "kind": "crop",
+  "name": "Guava",
+  "commodity": "Guava",
+  "version": "1.0",
+  "model": "q10",
+  "reference_temp_c": 10,
+  "reference_shelf_life_hours": 336,
+  "reference_shelf_life_range_hours": [240, 384],
+  "q10": 2.5,
+  "q10_range": [2.2, 3.0],
+  "min_effective_temp_c": 8,
+  "max_effective_temp_c": 45,
+  "default_ambient_c": 30,
+  "hard_thresholds": [
+    { "type": "max_temp", "value_c": 45, "label": "heat_damage" }
+  ],
+  "band_c": null,
+  "excursion_budget_minutes": null,
+  "sources": [
+    "USDA Agricultural Handbook 66 (2016), Guava: 2-3 weeks at 8-10 C, 90-95% RH; chilling injury below 5-8 C depending on maturity.",
+    "Kader, A.A. (UC Davis Postharvest) Guava produce facts: shelf life 2-3 d at 20-25 C for ripe fruit; Q10 ~2.5-3 (climacteric, high respiration).",
+    "Singh & Pal (2008), Response of climacteric-type guava to postharvest treatment: ambient (28-32 C) shelf life 2-4 d.",
+    "ICAR-CISH Lucknow guava postharvest bulletin: 8-10 C optimum storage."
+  ]
+}

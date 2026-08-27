@@ -1,0 +1,1 @@
+"""FarmSignal backend package (FastAPI)."""

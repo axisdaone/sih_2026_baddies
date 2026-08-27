@@ -1,0 +1,44 @@
+{
+  "subtitle": "Member batches by urgency, with mandis on the map.",
+  "tiles": {
+    "kg_at_risk": "kg at risk",
+    "kg_at_risk_hint": "Critical batches (≤ 25 % shelf life left)",
+    "batches": "Batches",
+    "fresh": "Fresh",
+    "warning": "Sell soon",
+    "critical": "Sell now",
+    "spoiled": "Spoiled"
+  },
+  "filter": { "all": "All", "label": "Filter by status" },
+  "list": {
+    "title": "Batches",
+    "empty": "No batches on this device yet.",
+    "empty_hint": "Load demo data from Settings or add a batch.",
+    "remaining": "Remaining",
+    "harvested": "Harvested",
+    "estimating": "Estimating…",
+    "no_estimate": "No estimate",
+    "closed": "Closed",
+    "select": "Select batch {{name}}",
+    "open": "Open batch {{name}}",
+    "selected": "Selected",
+    "no_location": "No location"
+  },
+  "crop": { "tomato": "Tomato", "guava": "Guava" },
+  "batch_status": { "open": "Open", "sold": "Sold", "spoiled": "Spoiled", "discarded": "Discarded" },
+  "map": {
+    "title": "Map",
+    "hint": "Tap a batch to draw the line to its recommended mandi.",
+    "batch": "Batch",
+    "mandi": "Mandi",
+    "price": "{{price}} / quintal",
+    "price_reported": "Reported {{date}}",
+    "no_price": "No price cached",
+    "recommended": "Recommended",
+    "line_hint": "Line = recommended mandi for the selected batch",
+    "no_recommendation": "No cached recommendation for this batch yet.",
+    "legend": "Legend",
+    "tiles_attribution": "© OpenStreetMap contributors"
+  },
+  "simulated_hint": "Batches with simulated readings are marked."
+}

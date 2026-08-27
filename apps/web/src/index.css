@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+    /* Bottom nav height; pages pad by this so content is never hidden behind it. */
+    --fs-nav-h: 4rem;
+    --fs-safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* Indic scripts need a little extra line-height to avoid clipped matras / stacked letters. */
+    line-height: 1.5;
+  }
+  body {
+    @apply bg-white font-sans text-gray-900 antialiased;
+    overscroll-behavior-y: contain;
+  }
+  h1 {
+    @apply text-2xl font-bold;
+  }
+  h2 {
+    @apply text-xl font-semibold;
+  }
+  button,
+  [role='button'] {
+    touch-action: manipulation;
+  }
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-600 ring-offset-2;
+  }
+}
+
+@layer components {
+  /* Large, glove-friendly touch targets (>= 56 px). */
+  .touch-target {
+    @apply min-h-14 min-w-14;
+  }
+  .btn {
+    @apply inline-flex min-h-14 items-center justify-center gap-2 rounded-xl px-5 text-lg font-semibold transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-primary {
+    @apply btn bg-brand text-white shadow-sm hover:bg-brand-700;
+  }
+  .btn-secondary {
+    @apply btn border-2 border-brand bg-white text-brand hover:bg-brand-50;
+  }
+  .btn-danger {
+    @apply btn bg-spoiled text-white hover:bg-red-800;
+  }
+  .card {
+    @apply rounded-2xl border border-gray-200 bg-white p-4 shadow-sm;
+  }
+  .chip {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide;
+  }
+  /* Page container: keeps content clear of the fixed bottom nav + safe area. */
+  .page {
+    @apply mx-auto w-full max-w-lg px-4 pt-4;
+    padding-bottom: calc(var(--fs-nav-h) + var(--fs-safe-bottom) + 1rem);
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: var(--fs-safe-bottom);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
