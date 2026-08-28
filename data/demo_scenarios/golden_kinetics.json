@@ -1,0 +1,1177 @@
+{
+  "version": "1.0",
+  "model_version": "kinetics-1.0",
+  "note": "Cross-language golden cases for ENGINEERING-CONTRACT section 2.2. Both services/api (pytest) and apps/web (vitest) must pass every case. Protocol parameters are the ones in services/api/app/kinetics/protocols/*.json (copied verbatim to apps/web/src/data/protocols). Compare only the keys present under 'expected'; 'segments' and 'expected_end' are deliberately not asserted. breach_type is the hard_threshold 'label' (or null).",
+  "tolerances": {
+    "hours": 0.05,
+    "fractions": 0.001,
+    "degree_hours": 0.05
+  },
+  "assumptions": [
+    "Hard-threshold comparison is strict: max_temp breaches when temp_c > value_c, min_temp when temp_c < value_c.",
+    "Readings with taken_at > now are dropped before every step (timeline, confidence, breach).",
+    "A reading before harvested_at is clamped so its segment starts at harvested_at.",
+    "Confidence: high = >=2 readings and last <= 2 h old; medium = >=1 reading and last <= 8 h old; else low.",
+    "Status uses the mid scenario; alerts_crossed lists thresholds [75, 50, 25] with remaining_fraction*100 <= threshold, in that order.",
+    "hours_since_last_reading is omitted from 'expected' when there are no readings (implementations may return null)."
+  ],
+  "cases": [
+    {
+      "id": "tomato_no_readings_assumed_ambient",
+      "note": "No readings: whole timeline is default_ambient_c (30 C) flagged assumed; confidence low.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T06:30:00Z",
+      "readings": [],
+      "expected": {
+        "status": "fresh",
+        "confidence": "low",
+        "consumed_fraction": 0.0833,
+        "remaining_fraction": 0.9167,
+        "remaining_hours": {
+          "low": 35.7,
+          "mid": 66.0,
+          "high": 97.7
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": true,
+        "thermal_load_degree_hours": 120.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_anchor_10c",
+      "note": "Literature anchor: 10 C -> 288 h nominal (range 240-336).",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T00:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 10.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 240.0,
+          "mid": 288.0,
+          "high": 336.0
+        },
+        "current_temp_c": 10.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_anchor_20c",
+      "note": "Literature anchor: 20 C -> 144 h nominal.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T00:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 20.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 100.0,
+          "mid": 144.0,
+          "high": 186.7
+        },
+        "current_temp_c": 20.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_anchor_30c",
+      "note": "Literature anchor: 30 C -> 72 h nominal.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T00:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 41.7,
+          "mid": 72.0,
+          "high": 103.7
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "guava_anchor_10c",
+      "note": "Literature anchor: 10 C -> 336 h nominal.",
+      "protocol_id": "guava",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T00:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 10.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 240.0,
+          "mid": 336.0,
+          "high": 384.0
+        },
+        "current_temp_c": 10.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "guava_anchor_20c",
+      "note": "Literature anchor: 20 C -> 134.4 h nominal.",
+      "protocol_id": "guava",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T00:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 20.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 80.0,
+          "mid": 134.4,
+          "high": 174.5
+        },
+        "current_temp_c": 20.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "guava_anchor_30c",
+      "note": "Literature anchor: 30 C -> 53.8 h nominal (~2.2 d).",
+      "protocol_id": "guava",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T00:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 26.7,
+          "mid": 53.8,
+          "high": 79.3
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "guava_chilling_floor_clamp",
+      "note": "4 C is below min_effective_temp_c=8: rate is clamped at r(8), current_temp_c still reports 4.0.",
+      "protocol_id": "guava",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T05:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 4.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0124,
+        "remaining_fraction": 0.9876,
+        "remaining_hours": {
+          "low": 294.0,
+          "mid": 398.6,
+          "high": 444.6
+        },
+        "current_temp_c": 4.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 5.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_constant_30c_after_6h",
+      "note": "Two readings, last one 3 h old -> medium confidence; consumed 24/288.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T06:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T03:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0833,
+        "remaining_fraction": 0.9167,
+        "remaining_hours": {
+          "low": 35.7,
+          "mid": 66.0,
+          "high": 97.7
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 3.0,
+        "thermal_load_degree_hours": 120.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_stale_single_reading",
+      "note": "One reading 10 h old: last segment assumed=true, confidence low.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T10:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 28.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "low",
+        "consumed_fraction": 0.1209,
+        "remaining_fraction": 0.8791,
+        "remaining_hours": {
+          "low": 39.6,
+          "mid": 72.7,
+          "high": 106.6
+        },
+        "current_temp_c": 28.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 10.0,
+        "thermal_load_degree_hours": 180.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_reading_before_harvest_clamped",
+      "note": "A reading 1 h before harvested_at is clamped to start at harvested_at (2 h at 25 C, then 2 h at 30 C).",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T04:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 25.0,
+          "taken_at": "2026-08-26T23:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T02:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.0474,
+        "remaining_fraction": 0.9526,
+        "remaining_hours": {
+          "low": 38.4,
+          "mid": 68.6,
+          "high": 100.2
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 2.0,
+        "thermal_load_degree_hours": 70.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_reading_after_now_dropped",
+      "note": "Reading at +5 h is after now (+3 h) and must be ignored entirely (also for confidence and breach).",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T03:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 28.0,
+          "taken_at": "2026-08-27T01:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 40.0,
+          "taken_at": "2026-08-27T05:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0381,
+        "remaining_fraction": 0.9619,
+        "remaining_hours": {
+          "low": 46.4,
+          "mid": 79.6,
+          "high": 113.5
+        },
+        "current_temp_c": 28.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 2.0,
+        "thermal_load_degree_hours": 56.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_hard_breach_46c",
+      "note": "46 C > 45 C max_temp hard threshold -> spoiled, remaining 0, breach heat_damage.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T04:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 46.0,
+          "taken_at": "2026-08-27T02:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T03:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "spoiled",
+        "confidence": "high",
+        "consumed_fraction": 1.0,
+        "remaining_fraction": 0.0,
+        "remaining_hours": {
+          "low": 0.0,
+          "mid": 0.0,
+          "high": 0.0
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 1.0,
+        "thermal_load_degree_hours": 96.0,
+        "alerts_crossed": [
+          75,
+          50,
+          25
+        ],
+        "breach_type": "heat_damage"
+      }
+    },
+    {
+      "id": "tomato_heat_spike_42c_no_breach",
+      "note": "demo scenario heat_spike: 42 C is below the threshold; decay accelerates but no breach.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T08:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T01:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T02:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "temp_c": 42.0,
+          "taken_at": "2026-08-27T03:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "temp_c": 42.0,
+          "taken_at": "2026-08-27T04:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T05:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T06:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000008",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T08:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.1471,
+        "remaining_fraction": 0.8529,
+        "remaining_hours": {
+          "low": 29.9,
+          "mid": 61.4,
+          "high": 93.7
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 184.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_hot_afternoon_8h",
+      "note": "demo scenario hot_afternoon evaluated at hour 8.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T08:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 33.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 35.0,
+          "taken_at": "2026-08-27T01:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "temp_c": 36.5,
+          "taken_at": "2026-08-27T02:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "temp_c": 38.0,
+          "taken_at": "2026-08-27T03:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "temp_c": 37.5,
+          "taken_at": "2026-08-27T04:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "temp_c": 36.0,
+          "taken_at": "2026-08-27T05:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T06:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000008",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T08:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.1549,
+        "remaining_fraction": 0.8451,
+        "remaining_hours": {
+          "low": 29.4,
+          "mid": 60.8,
+          "high": 93.1
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 196.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_cool_morning_8h",
+      "note": "demo scenario cool_morning evaluated at hour 8.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T08:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 22.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 23.0,
+          "taken_at": "2026-08-27T01:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "temp_c": 24.5,
+          "taken_at": "2026-08-27T02:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "temp_c": 26.0,
+          "taken_at": "2026-08-27T03:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "temp_c": 28.0,
+          "taken_at": "2026-08-27T04:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T05:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "temp_c": 31.5,
+          "taken_at": "2026-08-27T06:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000008",
+          "temp_c": 32.5,
+          "taken_at": "2026-08-27T07:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000009",
+          "temp_c": 33.0,
+          "taken_at": "2026-08-27T08:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.0944,
+        "remaining_fraction": 0.9056,
+        "remaining_hours": {
+          "low": 27.0,
+          "mid": 53.0,
+          "high": 81.1
+        },
+        "current_temp_c": 33.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 137.5,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_reefer_van_11h",
+      "note": "demo scenario reefer_van evaluated at hour 11 (12 C is above the 10 C floor, so it counts at r(12)).",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T11:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T01:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T03:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T05:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T07:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T09:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T11:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.0538,
+        "remaining_fraction": 0.9462,
+        "remaining_hours": {
+          "low": 186.6,
+          "mid": 237.2,
+          "high": 285.9
+        },
+        "current_temp_c": 12.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 40.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_hot_afternoon_36h_warning",
+      "note": "hot_afternoon then 28 h at the last reading (30 C, assumed): remaining fraction in (0.25, 0.5] -> warning, alerts 75 and 50.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-28T12:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 33.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 35.0,
+          "taken_at": "2026-08-27T01:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "temp_c": 36.5,
+          "taken_at": "2026-08-27T02:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "temp_c": 38.0,
+          "taken_at": "2026-08-27T03:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "temp_c": 37.5,
+          "taken_at": "2026-08-27T04:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "temp_c": 36.0,
+          "taken_at": "2026-08-27T05:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T06:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000008",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T08:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "warning",
+        "confidence": "low",
+        "consumed_fraction": 0.5438,
+        "remaining_fraction": 0.4562,
+        "remaining_hours": {
+          "low": 1.4,
+          "mid": 32.8,
+          "high": 65.1
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 28.0,
+        "thermal_load_degree_hours": 756.0,
+        "alerts_crossed": [
+          75,
+          50
+        ],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "tomato_hot_afternoon_60h_critical",
+      "note": "hot_afternoon then 52 h at 30 C: remaining fraction in (0, 0.25] -> critical, all alerts crossed.",
+      "protocol_id": "tomato",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-29T12:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 33.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 35.0,
+          "taken_at": "2026-08-27T01:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "temp_c": 36.5,
+          "taken_at": "2026-08-27T02:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "temp_c": 38.0,
+          "taken_at": "2026-08-27T03:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "temp_c": 37.5,
+          "taken_at": "2026-08-27T04:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "temp_c": 36.0,
+          "taken_at": "2026-08-27T05:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T06:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000008",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T08:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "critical",
+        "confidence": "low",
+        "consumed_fraction": 0.8771,
+        "remaining_fraction": 0.1229,
+        "remaining_hours": {
+          "low": 0.0,
+          "mid": 8.8,
+          "high": 41.1
+        },
+        "current_temp_c": 30.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 52.0,
+        "thermal_load_degree_hours": 1236.0,
+        "alerts_crossed": [
+          75,
+          50,
+          25
+        ],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "guava_pre_cooled_12h",
+      "note": "demo scenario pre_cooled evaluated at hour 12 for guava.",
+      "protocol_id": "guava",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T12:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 30.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 15.0,
+          "taken_at": "2026-08-27T01:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T02:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T04:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T06:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T08:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T10:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000008",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T12:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.0591,
+        "remaining_fraction": 0.9409,
+        "remaining_hours": {
+          "low": 174.0,
+          "mid": 263.2,
+          "high": 312.6
+        },
+        "current_temp_c": 12.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 45.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "pharma_anchor_half_budget",
+      "note": "Contract anchor: 6 h at 15 C then 6 h at 5 C -> consumed 0.5, remaining 6 h (budget), status warning.",
+      "protocol_id": "pharma_2_8",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T12:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 15.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T06:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "warning",
+        "confidence": "medium",
+        "consumed_fraction": 0.5,
+        "remaining_fraction": 0.5,
+        "remaining_hours": {
+          "low": 4.8,
+          "mid": 6.0,
+          "high": 7.2
+        },
+        "current_temp_c": 5.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 6.0,
+        "thermal_load_degree_hours": 60.0,
+        "alerts_crossed": [
+          75,
+          50
+        ],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "pharma_in_band_no_consumption",
+      "note": "In-band readings consume nothing; remaining reports the full budget (12 h), not infinity.",
+      "protocol_id": "pharma_2_8",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T03:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "medium",
+        "consumed_fraction": 0.0,
+        "remaining_fraction": 1.0,
+        "remaining_hours": {
+          "low": 10.8,
+          "mid": 12.0,
+          "high": 13.2
+        },
+        "current_temp_c": 5.0,
+        "current_temp_assumed": true,
+        "hours_since_last_reading": 3.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "pharma_currently_out_of_band",
+      "note": "1 h out of band so far and still out of band: remaining = (1-1/12)*12 = 11 h.",
+      "protocol_id": "pharma_2_8",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T03:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 12.0,
+          "taken_at": "2026-08-27T02:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.0833,
+        "remaining_fraction": 0.9167,
+        "remaining_hours": {
+          "low": 9.8,
+          "mid": 11.0,
+          "high": 12.2
+        },
+        "current_temp_c": 12.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 1.0,
+        "thermal_load_degree_hours": 7.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "pharma_excursion_scenario_12h",
+      "note": "demo scenario pharma_excursion: 4 h out of band -> consumed 1/3.",
+      "protocol_id": "pharma_2_8",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T12:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T01:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "temp_c": 15.0,
+          "taken_at": "2026-08-27T02:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "temp_c": 15.0,
+          "taken_at": "2026-08-27T03:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "temp_c": 15.0,
+          "taken_at": "2026-08-27T04:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000006",
+          "temp_c": 15.0,
+          "taken_at": "2026-08-27T05:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000007",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T06:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000008",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T08:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000009",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T10:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000010",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T12:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "fresh",
+        "confidence": "high",
+        "consumed_fraction": 0.3333,
+        "remaining_fraction": 0.6667,
+        "remaining_hours": {
+          "low": 6.8,
+          "mid": 8.0,
+          "high": 9.2
+        },
+        "current_temp_c": 5.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 40.0,
+        "alerts_crossed": [
+          75
+        ],
+        "breach_type": null
+      }
+    },
+    {
+      "id": "pharma_freeze_scenario_breach",
+      "note": "demo scenario pharma_freeze: -1 C < 0 C min_temp -> spoiled with breach freeze.",
+      "protocol_id": "pharma_2_8",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T04:30:00Z",
+      "readings": [
+        {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T00:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000002",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T01:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000003",
+          "temp_c": -1.0,
+          "taken_at": "2026-08-27T02:30:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T03:00:00Z"
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "temp_c": 5.0,
+          "taken_at": "2026-08-27T04:30:00Z"
+        }
+      ],
+      "expected": {
+        "status": "spoiled",
+        "confidence": "high",
+        "consumed_fraction": 1.0,
+        "remaining_fraction": 0.0,
+        "remaining_hours": {
+          "low": 0.0,
+          "mid": 0.0,
+          "high": 0.0
+        },
+        "current_temp_c": 5.0,
+        "current_temp_assumed": false,
+        "hours_since_last_reading": 0.0,
+        "thermal_load_degree_hours": 0.0,
+        "alerts_crossed": [
+          75,
+          50,
+          25
+        ],
+        "breach_type": "freeze"
+      }
+    },
+    {
+      "id": "pharma_no_readings_assumed_25c",
+      "note": "No readings: assumed 25 C (default_ambient_c) which is out of band, so 2 h of budget consumed.",
+      "protocol_id": "pharma_2_8",
+      "harvested_at": "2026-08-27T00:30:00Z",
+      "now": "2026-08-27T02:30:00Z",
+      "readings": [],
+      "expected": {
+        "status": "fresh",
+        "confidence": "low",
+        "consumed_fraction": 0.1667,
+        "remaining_fraction": 0.8333,
+        "remaining_hours": {
+          "low": 8.8,
+          "mid": 10.0,
+          "high": 11.2
+        },
+        "current_temp_c": 25.0,
+        "current_temp_assumed": true,
+        "thermal_load_degree_hours": 40.0,
+        "alerts_crossed": [],
+        "breach_type": null
+      }
+    }
+  ]
+}

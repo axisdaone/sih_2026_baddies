@@ -1,0 +1,153 @@
+{
+  "version": "1.0",
+  "note": "Pre-recorded voice prompts (contract 9). 7 keys x 3 locales = 21 clips at /audio/<locale>/<key>.mp3 (mp3, mono, 32 kbps). Drop a file in and flip its status to \"ready\"; voice/play() falls back to speechSynthesis (labelled TTS) when a clip is missing. Recording script + format: public/audio/README.md.",
+  "keys": [
+    "welcome",
+    "batch_logged",
+    "alert_75",
+    "alert_50",
+    "alert_25",
+    "sell_now",
+    "recommendation_ready"
+  ],
+  "locales": [
+    "en",
+    "hi",
+    "ta"
+  ],
+  "clips": [
+    {
+      "locale": "en",
+      "key": "welcome",
+      "path": "/audio/en/welcome.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "en",
+      "key": "batch_logged",
+      "path": "/audio/en/batch_logged.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "en",
+      "key": "alert_75",
+      "path": "/audio/en/alert_75.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "en",
+      "key": "alert_50",
+      "path": "/audio/en/alert_50.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "en",
+      "key": "alert_25",
+      "path": "/audio/en/alert_25.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "en",
+      "key": "sell_now",
+      "path": "/audio/en/sell_now.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "en",
+      "key": "recommendation_ready",
+      "path": "/audio/en/recommendation_ready.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "hi",
+      "key": "welcome",
+      "path": "/audio/hi/welcome.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "hi",
+      "key": "batch_logged",
+      "path": "/audio/hi/batch_logged.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "hi",
+      "key": "alert_75",
+      "path": "/audio/hi/alert_75.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "hi",
+      "key": "alert_50",
+      "path": "/audio/hi/alert_50.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "hi",
+      "key": "alert_25",
+      "path": "/audio/hi/alert_25.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "hi",
+      "key": "sell_now",
+      "path": "/audio/hi/sell_now.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "hi",
+      "key": "recommendation_ready",
+      "path": "/audio/hi/recommendation_ready.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "ta",
+      "key": "welcome",
+      "path": "/audio/ta/welcome.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "ta",
+      "key": "batch_logged",
+      "path": "/audio/ta/batch_logged.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "ta",
+      "key": "alert_75",
+      "path": "/audio/ta/alert_75.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "ta",
+      "key": "alert_50",
+      "path": "/audio/ta/alert_50.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "ta",
+      "key": "alert_25",
+      "path": "/audio/ta/alert_25.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "ta",
+      "key": "sell_now",
+      "path": "/audio/ta/sell_now.mp3",
+      "status": "missing"
+    },
+    {
+      "locale": "ta",
+      "key": "recommendation_ready",
+      "path": "/audio/ta/recommendation_ready.mp3",
+      "status": "missing"
+    }
+  ],
+  "format": {
+    "container": "mp3",
+    "channels": 1,
+    "bitrate_kbps": 32,
+    "sample_rate_hz": 22050,
+    "script": "README.md"
+  }
+}

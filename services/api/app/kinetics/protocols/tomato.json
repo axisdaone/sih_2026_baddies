@@ -1,0 +1,27 @@
+{
+  "id": "tomato",
+  "kind": "crop",
+  "name": "Tomato",
+  "commodity": "Tomato",
+  "version": "1.0",
+  "model": "q10",
+  "reference_temp_c": 10,
+  "reference_shelf_life_hours": 288,
+  "reference_shelf_life_range_hours": [240, 336],
+  "q10": 2.0,
+  "q10_range": [1.8, 2.4],
+  "min_effective_temp_c": 10,
+  "max_effective_temp_c": 45,
+  "default_ambient_c": 30,
+  "hard_thresholds": [
+    { "type": "max_temp", "value_c": 45, "label": "heat_damage" }
+  ],
+  "band_c": null,
+  "excursion_budget_minutes": null,
+  "sources": [
+    "USDA Agricultural Handbook 66 (2016), Tomato: 10-14 d shelf life at 10-12.5 C for firm-ripe fruit; chilling injury below 10 C.",
+    "Kader, A.A. Postharvest Technology of Horticultural Crops (UC ANR 3311): Q10 of respiration for most produce is 2-3 in the 10-30 C range.",
+    "Tijskens & Polderdijk (1996), A generic model for keeping quality of vegetable produce: Arrhenius keeping-quality kinetics for tomato.",
+    "ICAR-CIPHET (2015) field data: ripe tomato lasts 2-4 d at 28-32 C ambient in Indian mandi conditions."
+  ]
+}

@@ -1,0 +1,43 @@
+[project]
+name = "farmsignal-api"
+version = "0.1.0"
+description = "FarmSignal backend: kinetics-based shelf-life, mandi routing, Quality Pass (SIH 2026)."
+requires-python = ">=3.12"
+readme = "README.md"
+dynamic = ["dependencies"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".venv", "alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+known-third-party = ["alembic"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["app"]
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+no_implicit_optional = true
+warn_return_any = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+strict_equality = true
+exclude = ['\.venv', 'alembic']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["."]
+filterwarnings = [
+    "error::DeprecationWarning:app.*",
+    "ignore:Using `httpx` with `starlette.testclient`",
+]

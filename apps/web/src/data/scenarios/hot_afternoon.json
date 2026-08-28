@@ -1,0 +1,44 @@
+{
+  "id": "hot_afternoon",
+  "name": "Hot afternoon in the open",
+  "description": "Batch left in an open yard at 33-38 C for 6 h waiting for a trader, then 30 C into the evening.",
+  "suitable_protocols": [
+    "tomato",
+    "guava"
+  ],
+  "readings": [
+    {
+      "offset_hours": 0,
+      "temp_c": 33
+    },
+    {
+      "offset_hours": 1,
+      "temp_c": 35
+    },
+    {
+      "offset_hours": 2,
+      "temp_c": 36.5
+    },
+    {
+      "offset_hours": 3,
+      "temp_c": 38
+    },
+    {
+      "offset_hours": 4,
+      "temp_c": 37.5
+    },
+    {
+      "offset_hours": 5,
+      "temp_c": 36
+    },
+    {
+      "offset_hours": 6,
+      "temp_c": 30
+    },
+    {
+      "offset_hours": 8,
+      "temp_c": 30
+    }
+  ],
+  "expected_story": "Fast decay: 6 h at 33-38 C consumes roughly 13% (tomato) to 23% (guava) of shelf life before the batch even moves. This is the status-quo side of the 18% vs 7% loss comparison."
+}

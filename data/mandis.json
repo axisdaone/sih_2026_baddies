@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "region": "Tamil Nadu + border Karnataka (demo region)",
+  "note": "Coordinates are approximate market-yard locations. agmarknet_* fields map to data.gov.in resource 9ef84268-d588-465a-a308-a864a43d0070 filter values.",
+  "demo_origin": { "label": "Palacode block, Dharmapuri district (tomato belt)", "lat": 12.30, "lon": 78.07 },
+  "mandis": [
+    { "id": "dharmapuri",  "name": "Dharmapuri",            "state": "Tamil Nadu", "district": "Dharmapuri",  "lat": 12.1211, "lon": 78.1582, "agmarknet_market": "Dharmapuri",  "agmarknet_state": "Tamil Nadu", "agmarknet_district": "Dharmapuri" },
+    { "id": "palacode",    "name": "Palacode",              "state": "Tamil Nadu", "district": "Dharmapuri",  "lat": 12.3050, "lon": 78.0730, "agmarknet_market": "Palacode",    "agmarknet_state": "Tamil Nadu", "agmarknet_district": "Dharmapuri" },
+    { "id": "krishnagiri", "name": "Krishnagiri",           "state": "Tamil Nadu", "district": "Krishnagiri", "lat": 12.5186, "lon": 78.2137, "agmarknet_market": "Krishnagiri", "agmarknet_state": "Tamil Nadu", "agmarknet_district": "Krishnagiri" },
+    { "id": "hosur",       "name": "Hosur",                 "state": "Tamil Nadu", "district": "Krishnagiri", "lat": 12.7409, "lon": 77.8253, "agmarknet_market": "Hosur",       "agmarknet_state": "Tamil Nadu", "agmarknet_district": "Krishnagiri" },
+    { "id": "salem",       "name": "Salem",                 "state": "Tamil Nadu", "district": "Salem",       "lat": 11.6643, "lon": 78.1460, "agmarknet_market": "Salem",       "agmarknet_state": "Tamil Nadu", "agmarknet_district": "Salem" },
+    { "id": "vellore",     "name": "Vellore",               "state": "Tamil Nadu", "district": "Vellore",     "lat": 12.9165, "lon": 79.1325, "agmarknet_market": "Vellore",     "agmarknet_state": "Tamil Nadu", "agmarknet_district": "Vellore" },
+    { "id": "koyambedu",   "name": "Koyambedu (Chennai)",   "state": "Tamil Nadu", "district": "Chennai",     "lat": 13.0694, "lon": 80.1948, "agmarknet_market": "Koyambedu",   "agmarknet_state": "Tamil Nadu", "agmarknet_district": "Chennai" },
+    { "id": "coimbatore",  "name": "Coimbatore",            "state": "Tamil Nadu", "district": "Coimbatore",  "lat": 11.0168, "lon": 76.9558, "agmarknet_market": "Coimbatore",  "agmarknet_state": "Tamil Nadu", "agmarknet_district": "Coimbatore" },
+    { "id": "trichy",      "name": "Trichy",                "state": "Tamil Nadu", "district": "Trichy",      "lat": 10.7905, "lon": 78.7047, "agmarknet_market": "Trichy",      "agmarknet_state": "Tamil Nadu", "agmarknet_district": "Trichy" },
+    { "id": "ottanchatram","name": "Ottanchatram (Dindigul)","state": "Tamil Nadu","district": "Dindigul",    "lat": 10.5003, "lon": 77.7575, "agmarknet_market": "Ottanchatram","agmarknet_state": "Tamil Nadu", "agmarknet_district": "Dindigul" },
+    { "id": "madurai",     "name": "Madurai",               "state": "Tamil Nadu", "district": "Madurai",     "lat": 9.9252,  "lon": 78.1198, "agmarknet_market": "Madurai",     "agmarknet_state": "Tamil Nadu", "agmarknet_district": "Madurai" },
+    { "id": "kolar",       "name": "Kolar",                 "state": "Karnataka",  "district": "Kolar",       "lat": 13.1367, "lon": 78.1292, "agmarknet_market": "Kolar",       "agmarknet_state": "Karnataka",  "agmarknet_district": "Kolar" },
+    { "id": "bengaluru",   "name": "Bengaluru (Binny Mill)","state": "Karnataka",  "district": "Bangalore",   "lat": 12.9716, "lon": 77.5946, "agmarknet_market": "Binny Mill (F&V), Bangalore", "agmarknet_state": "Karnataka", "agmarknet_district": "Bangalore" }
+  ]
+}

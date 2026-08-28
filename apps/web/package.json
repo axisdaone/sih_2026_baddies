@@ -1,0 +1,56 @@
+{
+  "name": "farmsignal-web",
+  "private": true,
+  "version": "0.1.0",
+  "description": "FarmSignal PWA - offline-first shelf-life and mandi routing for first-mile cold chain (SIH 2026)",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "postbuild": "node scripts/check-bundle-size.mjs",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "sync-data": "node scripts/sync-data.mjs",
+    "make-icons": "node scripts/make-icons.mjs"
+  },
+  "dependencies": {
+    "dexie": "4.4.5",
+    "dexie-react-hooks": "4.4.0",
+    "i18next": "26.4.0",
+    "i18next-browser-languagedetector": "8.2.1",
+    "leaflet": "1.9.4",
+    "qrcode": "1.5.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-i18next": "17.0.12",
+    "react-leaflet": "4.2.1",
+    "react-router-dom": "6.30.6",
+    "workbox-window": "7.4.1"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/jest-dom": "7.0.1",
+    "@testing-library/react": "16.3.2",
+    "@types/leaflet": "1.9.22",
+    "@types/node": "22.20.1",
+    "@types/qrcode": "1.5.6",
+    "@types/react": "18.3.31",
+    "@types/react-dom": "18.3.7",
+    "@vitejs/plugin-react": "4.7.0",
+    "autoprefixer": "10.5.4",
+    "fake-indexeddb": "6.2.5",
+    "jsdom": "27.4.0",
+    "postcss": "8.5.26",
+    "tailwindcss": "3.4.19",
+    "typescript": "5.9.3",
+    "vite": "5.4.21",
+    "vite-plugin-pwa": "1.3.0",
+    "vitest": "3.2.7",
+    "workbox-build": "7.4.1"
+  }
+}
